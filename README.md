@@ -7,10 +7,13 @@ Small serverless API used by the Firdavs Tours Agentplace agent.
 | `GET /api/tours` | List of the 14 tours |
 | `GET /api/quote?tour=classic-8&pax=2&class=comfort` | Exact price: per person, single supplement, total, large-group flag |
 | `GET /api/departures?tour=classic-group-8&from=2027-02-01` | Next fixed departures (group tour) or "private, runs all year" |
-| `POST /api/requests` | Saves a booking request, returns `request_id` (validates name, email/Telegram, tour, travellers, class, dates) |
+| `POST /api/requests` | Saves a booking request, returns `request_id`. Validates name, email/Telegram, tour, travellers, class, dates. Rate limit 5 per 10 min per IP; `Idempotency-Key` header prevents duplicates on retries; honeypot field `website` blocks form bots |
+| `GET /api/health` | Uptime check (storage mode, tour count) |
 | `GET /api/requests` | Team view of saved requests (needs `Authorization: Bearer $ADMIN_TOKEN`) |
 
-No dependencies. Node 20+. Tests: `npm test` (10 tests).
+No dependencies. Node 20+. Tests: `npm test` (16 tests). Landing/docs page: `public/index.html`.
+
+Optional env: `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` → the sales team gets a Telegram message on every new request.
 
 ## Deploy (Vercel, ~5 min)
 1. Push this folder to a new GitHub repo (e.g. `firdavs-tours-api`).
@@ -21,5 +24,5 @@ No dependencies. Node 20+. Tests: `npm test` (10 tests).
 
 ## Production notes
 - Prices live in `lib/tours.json`; in production this would be a CMS/DB with an admin UI.
-- Add rate limiting and a captcha-free spam check (e.g. per-IP limit) on `POST /api/requests`.
-- Notify the team on each new request (Telegram bot or email) instead of polling `GET /api/requests`.
+- Done: per-IP rate limit, honeypot, idempotency keys, Telegram alerts, health check.
+- Next: admin UI for prices and request status, signed webhook for the CRM, structured logs + alerting.
