@@ -1,0 +1,42 @@
+---
+import { Picture } from 'astro:assets';
+import Base from '../layouts/Base.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { photo, photoCredits } from '../lib/photos';
+---
+<Base title="Photo credits · Firdavs Tours" description="Credits and licences for the photographs used on the Firdavs Tours website." path="/credits">
+  <Header />
+  <main id="main" class="wrap page">
+    <h1>Photo credits</h1>
+    <p class="lede">Every photograph on this site comes from Wikimedia Commons and is used under the licence shown. Images have been resized and compressed; no other changes were made.</p>
+    <ul class="credits">
+      {photoCredits.map((c) => {
+        const p = photo(c.slug);
+        return (
+          <li>
+            <Picture src={p.src} alt="" formats={['avif', 'webp']} widths={[160, 240]} sizes="120px" loading="lazy" decoding="async" />
+            <div>
+              <p class="t"><a href={c.source} rel="noopener">{c.title.replace(/\.(jpe?g|png)$/i, '')}</a></p>
+              <p class="m">by {c.author} · {c.licenseUrl ? <a href={c.licenseUrl} rel="license noopener">{c.license}</a> : c.license} · via Wikimedia Commons</p>
+            </div>
+          </li>
+        );
+      })}
+    </ul>
+    <p class="fonts">Typefaces: Cormorant Garamond and Source Sans 3, both under the SIL Open Font License.</p>
+  </main>
+  <Footer />
+</Base>
+<style>
+  .page { padding-block: clamp(48px, 8vw, 96px); max-width: 860px; }
+  h1 { font-size: clamp(2.4rem, 5vw, 3.6rem); margin-bottom: 16px; }
+  .credits { list-style: none; margin: 40px 0 0; padding: 0; border-top: 1px solid var(--line); }
+  .credits li { display: grid; grid-template-columns: 96px 1fr; gap: 18px; align-items: center; padding: 16px 0; border-bottom: 1px solid var(--line-soft); }
+  .credits :global(img) { width: 96px; height: 68px; object-fit: cover; border-radius: 10px; }
+  .t { font-weight: 600; overflow-wrap: anywhere; }
+  .t a { text-decoration: none; } .t a:hover { text-decoration: underline; color: var(--turq-ink); }
+  .m { color: var(--muted); font-size: 0.93rem; }
+  .m a { color: var(--turq-ink); }
+  .fonts { margin-top: 32px; color: var(--muted); font-size: 0.93rem; }
+</style>
