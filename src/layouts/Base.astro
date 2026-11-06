@@ -1,0 +1,69 @@
+---
+import '@fontsource/cormorant-garamond/latin-500.css';
+import '@fontsource/cormorant-garamond/latin-600.css';
+import '@fontsource/cormorant-garamond/latin-ext-600.css';
+import '@fontsource/cormorant-garamond/cyrillic-600.css';
+import '@fontsource-variable/source-sans-3/wght.css';
+import '../styles/global.css';
+import serifUrl from '@fontsource/cormorant-garamond/files/cormorant-garamond-latin-600-normal.woff2?url';
+import sansUrl from '@fontsource-variable/source-sans-3/files/source-sans-3-latin-wght-normal.woff2?url';
+import { SITE } from '../lib/site';
+
+interface Props {
+  title: string;
+  description: string;
+  path: string;
+  jsonLd?: object[];
+  noindex?: boolean;
+  bodyClass?: string;
+}
+const { title, description, path, jsonLd = [], noindex = false, bodyClass } = Astro.props;
+const canonical = new URL(path, SITE.url).href.replace(/\/$/, path === '/' ? '/' : '');
+const og = new URL('/og.jpg', SITE.url).href;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex" />}
+    <meta name="color-scheme" content="dark light" />
+    <meta name="theme-color" content="#0d162b" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#fbf9f4" media="(prefers-color-scheme: light)" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="preload" href={serifUrl} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={sansUrl} as="font" type="font/woff2" crossorigin />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={SITE.name} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={og} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Firdavs Tours: plan Uzbekistan in one conversation" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={og} />
+    {jsonLd.map((d) => <script type="application/ld+json" set:html={JSON.stringify(d)} />)}
+    <slot name="head" />
+  </head>
+  <body class={bodyClass}>
+    <Fragment set:html={`<!--
+DIRECTION CONTRACT (seed 3cbb6ce6, surface scope, structure: tile-field hero)
+THESIS: Uzbekistan is planned in one conversation; the first viewport IS that conversation's opening line.
+WORLD: Samarkand tilework at night. Lapis ground, turquoise glaze, sand-gold grout lines, Cormorant display over Source Sans; mirrors the planner exactly, cream in light scheme.
+FIRST VIEWPORT: khatam-star tile field radiating from a glazed planner panel (question + six starters); photography begins one scroll below.
+SIGNATURE: the panel morphs into /plan and the question is delivered on arrival.
+GUARDS: prices from lib/tours.json only; no implementation words; no invented proof.
+-->`} />
+    <slot />
+  </body>
+</html>

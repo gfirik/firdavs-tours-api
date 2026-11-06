@@ -1,0 +1,148 @@
+/* Firdavs Tours — Samarkand tilework system.
+   Dark is the signature (lapis night); light mirrors the planner's cream theme.
+   Both follow the OS, exactly like the planner, so / and /plan never disagree. */
+
+:root {
+  color-scheme: dark light;
+
+  /* Lapis night (dark) */
+  --bg: #0d162b;            /* planner background, hsl(223 52% 11%) */
+  --bg-deep: #091022;
+  --surface: #142039;       /* planner card, hsl(222 43% 15%) */
+  --surface-2: #1a2847;
+  --line: #2c3a58;          /* planner border, hsl(223 28% 28%) */
+  --line-soft: #1f2c49;
+  --text: #f3ede0;          /* planner foreground, hsl(42 42% 93%) */
+  --muted: #b0bacb;         /* planner muted, hsl(218 21% 74%) */
+  --turq: #3cc6c0;          /* brand turquoise */
+  --turq-ink: #79d6cc;      /* planner primary, readable on navy */
+  --on-turq: #062326;
+  --gold: #d9b46a;
+  --gold-ink: #e2c486;
+  --lapis: #1e3f8a;
+  --tile-line: rgb(60 198 192 / 0.16);
+  --tile-gold: rgb(217 180 106 / 0.16);
+  --shadow: 0 18px 50px -18px rgb(2 6 20 / 0.75), 0 2px 6px rgb(2 6 20 / 0.35);
+  --veil: linear-gradient(180deg, rgb(13 22 43 / 0) 0%, rgb(13 22 43 / 0.55) 55%, rgb(9 16 34 / 0.94) 100%);
+
+  --serif: 'Cormorant Garamond', 'Cormorant', Georgia, 'Times New Roman', serif;
+  --sans: 'Source Sans 3 Variable', 'Source Sans 3', 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  --radius: 16px;
+  --radius-lg: 24px;
+  --gutter: clamp(16px, 4vw, 40px);
+  --max: 1200px;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #fbf9f4;          /* planner cream, hsl(42 50% 97%) */
+    --bg-deep: #f3eee3;
+    --surface: #fffdf8;
+    --surface-2: #f6f1e6;
+    --line: #ded6c6;        /* hsl(39 24% 84%) */
+    --line-soft: #ebe5d8;
+    --text: #16213b;        /* hsl(222 47% 16%) */
+    --muted: #46536d;       /* hsl(221 20% 35%) */
+    --turq: #3cc6c0;
+    --turq-ink: #0f6f6b;
+    --on-turq: #062326;
+    --gold: #b98a2e;
+    --gold-ink: #7d5b17;
+    --lapis: #183c81;       /* planner primary, hsl(221 69% 30%) */
+    --tile-line: rgb(24 60 129 / 0.12);
+    --tile-gold: rgb(185 138 46 / 0.16);
+    --shadow: 0 18px 44px -20px rgb(22 33 59 / 0.35), 0 2px 6px rgb(22 33 59 / 0.08);
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; scroll-padding-top: 88px; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 400 1.0625rem/1.65 var(--sans);
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: clip;
+}
+img, svg, picture { display: block; max-width: 100%; }
+img { height: auto; }
+button, input, textarea { font: inherit; color: inherit; }
+a { color: inherit; text-underline-offset: 0.2em; text-decoration-thickness: 1px; }
+::selection { background: var(--turq); color: var(--on-turq); }
+:focus { outline: none; }
+:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; border-radius: 6px; }
+input, textarea { caret-color: var(--turq); }
+
+h1, h2, h3 {
+  font-family: var(--serif);
+  font-weight: 600;
+  line-height: 1.04;
+  letter-spacing: -0.012em;
+  text-wrap: balance;
+  margin: 0;
+}
+h2 { font-size: clamp(2.15rem, 4.6vw, 3.4rem); }
+h3 { font-size: 1.6rem; line-height: 1.12; }
+p { margin: 0; text-wrap: pretty; }
+
+.wrap { width: min(100% - 2 * var(--gutter), var(--max)); margin-inline: auto; }
+.section { padding-block: clamp(72px, 11vw, 140px); }
+.section-head { display: grid; gap: 14px; margin-bottom: clamp(32px, 5vw, 56px); max-width: 44rem; }
+.lede { color: var(--muted); font-size: 1.125rem; max-width: 40rem; }
+.num { font-variant-numeric: tabular-nums lining-nums; }
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+.skip {
+  position: absolute; left: 12px; top: -60px; z-index: 100;
+  background: var(--turq); color: var(--on-turq); padding: 10px 16px; border-radius: 10px; font-weight: 600;
+}
+.skip:focus-visible { top: 12px; }
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  min-height: 48px; padding: 0 22px; border-radius: 999px;
+  font-weight: 600; font-size: 1rem; text-decoration: none; letter-spacing: 0.005em;
+  border: 1px solid transparent; cursor: pointer;
+  transition: transform 0.4s var(--ease), background-color 0.3s, box-shadow 0.4s var(--ease), border-color 0.3s;
+}
+.btn svg { width: 18px; height: 18px; transition: transform 0.4s var(--ease); }
+.btn:hover svg { transform: translateX(3px); }
+.btn-primary { background: var(--turq); color: var(--on-turq); box-shadow: 0 10px 26px -12px rgb(60 198 192 / 0.7); }
+.btn-primary:hover { background: #55d3cd; transform: translateY(-1px); }
+.btn-ghost { border-color: var(--line); background: transparent; color: var(--text); }
+.btn-ghost:hover { border-color: var(--turq-ink); }
+
+/* Starter chips: same shape and voice as the planner's own */
+.chips { display: flex; flex-wrap: wrap; gap: 10px; padding: 0; margin: 0; list-style: none; }
+.chip {
+  display: inline-flex; align-items: center; gap: 10px;
+  min-height: 44px; padding: 0 16px; border-radius: 14px;
+  background: color-mix(in oklab, var(--surface) 88%, transparent);
+  border: 1px solid var(--line); color: var(--text);
+  font-size: 0.97rem; cursor: pointer; text-decoration: none;
+  transition: border-color 0.25s, background-color 0.25s, transform 0.35s var(--ease);
+}
+.chip svg { width: 15px; height: 15px; opacity: 0.7; transition: transform 0.35s var(--ease), opacity 0.25s; }
+.chip:hover { border-color: var(--turq-ink); transform: translateY(-1px); }
+.chip:hover svg { transform: translateX(2px); opacity: 1; }
+
+/* Scrollbars */
+* { scrollbar-color: var(--line) transparent; scrollbar-width: thin; }
+
+@view-transition { navigation: auto; }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: 0.35s; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+  @view-transition { navigation: none; }
+}

@@ -1,0 +1,42 @@
+---
+import Mark from './Mark.astro';
+interface Props { note?: string }
+const { note = 'Prices are 2026 estimates in USD per person, confirmed by a consultant before booking.' } = Astro.props;
+---
+<footer class="site-footer">
+  <div class="wrap grid">
+    <div class="about">
+      <a class="brand" href="/" aria-label="Firdavs Tours, home"><Mark size={32} /><span>Firdavs Tours</span></a>
+      <p>Private and small-group journeys across Uzbekistan, planned in English, Russian or Uzbek.</p>
+    </div>
+    <nav aria-label="Footer">
+      <ul>
+        <li><a href="/#tours">Tours</a></li>
+        <li><a href="/#how">How it works</a></li>
+        <li><a href="/#faq">FAQ</a></li>
+        <li><a href="/plan">Plan my trip</a></li>
+        <li><a href="/about">About this project</a></li>
+        <li><a href="/credits">Photo credits</a></li>
+      </ul>
+    </nav>
+  </div>
+  <div class="wrap base">
+    <p>{note}</p>
+    <a class="badge" href="https://fhsystems.dev" rel="noopener">Built by <strong>fhsystems</strong></a>
+  </div>
+</footer>
+
+<style>
+  .site-footer { border-top: 1px solid var(--line); background: var(--bg-deep); padding-top: 56px; }
+  .grid { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 32px 64px; padding-bottom: 40px; }
+  .about { max-width: 26rem; display: grid; gap: 14px; }
+  .about p { color: var(--muted); }
+  .brand { display: inline-flex; align-items: center; gap: 12px; text-decoration: none; font-family: var(--serif); font-weight: 600; font-size: 1.35rem; }
+  nav ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(150px, auto)); gap: 4px 40px; }
+  nav a { display: inline-block; padding: 8px 0; color: var(--muted); text-decoration: none; }
+  nav a:hover { color: var(--text); text-decoration: underline; }
+  .base { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding-block: 22px 32px; border-top: 1px solid var(--line-soft); color: var(--muted); font-size: 0.92rem; }
+  .badge { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line); text-decoration: none; color: var(--muted); font-size: 0.88rem; white-space: nowrap; transition: border-color 0.2s, color 0.2s; }
+  .badge strong { color: var(--text); font-weight: 600; }
+  .badge:hover { border-color: var(--turq-ink); color: var(--text); }
+</style>

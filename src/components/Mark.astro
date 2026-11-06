@@ -1,0 +1,14 @@
+---
+// Brand mark: an eight-pointed khatam star, the unit of Samarkand tile geometry.
+interface Props { size?: number; class?: string }
+const { size = 36, class: cls } = Astro.props;
+---
+<svg class={cls} width={size} height={size} viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+  <rect width="48" height="48" rx="13" fill="#123b3f" />
+  <g fill="#3cc6c0">
+    <rect x="13" y="13" width="22" height="22" rx="1.5" />
+    <rect x="13" y="13" width="22" height="22" rx="1.5" transform="rotate(45 24 24)" />
+  </g>
+  <path d="M24 16.5l2.3 5.2 5.2 2.3-5.2 2.3-2.3 5.2-2.3-5.2-5.2-2.3 5.2-2.3z" fill="#123b3f" />
+  <circle cx="24" cy="24" r="2.6" fill="#d9b46a" />
+</svg>

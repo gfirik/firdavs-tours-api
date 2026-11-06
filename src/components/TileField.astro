@@ -1,0 +1,29 @@
+---
+// Authored khatam (eight-pointed star) lattice, the grammar of Timurid tilework.
+// Turquoise star outlines with sand-gold grout crosses; decorative only.
+interface Props { id?: string; class?: string }
+const { id = 'tile', class: cls } = Astro.props;
+const s = 96, c = s / 2, r = 26, k = r * 0.4142; // octagram geometry
+const star = [
+  [c - r, c - k], [c - r, c + k], [c - k, c + r], [c + k, c + r],
+  [c + r, c + k], [c + r, c - k], [c + k, c - r], [c - k, c - r],
+];
+const sq = (rot: number) => `M${c - r * 0.78},${c - r * 0.78}h${r * 1.56}v${r * 1.56}h${-r * 1.56}z`;
+---
+<svg class={cls} aria-hidden="true" focusable="false" preserveAspectRatio="xMidYMid slice" viewBox="0 0 1440 900">
+  <defs>
+    <pattern id={id} width={s} height={s} patternUnits="userSpaceOnUse">
+      <g fill="none" style="stroke:var(--tile-line)" stroke-width="1.1">
+        <path d={sq(0)} />
+        <path d={sq(45)} transform={`rotate(45 ${c} ${c})`} />
+        <polygon points={star.map((p) => p.join(',')).join(' ')} />
+        <path d={`M0,0L${c - r * 0.78},${c - r * 0.78}M${s},0L${c + r * 0.78},${c - r * 0.78}M0,${s}L${c - r * 0.78},${c + r * 0.78}M${s},${s}L${c + r * 0.78},${c + r * 0.78}`} />
+      </g>
+      <g fill="none" style="stroke:var(--tile-gold)" stroke-width="1.1">
+        <path d={`M${c},0V${c - r * 1.1}M${c},${s}V${c + r * 1.1}M0,${c}H${c - r * 1.1}M${s},${c}H${c + r * 1.1}`} />
+        <circle cx={c} cy={c} r="3" style="fill:var(--tile-gold);stroke:none" />
+      </g>
+    </pattern>
+  </defs>
+  <rect width="100%" height="100%" fill={`url(#${id})`} />
+</svg>
