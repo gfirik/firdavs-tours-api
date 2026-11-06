@@ -56,7 +56,7 @@ const jsonLd = [
     image: SITE.url + '/og.jpg',
     description: SITE.description,
     areaServed: { '@type': 'Country', name: 'Uzbekistan' },
-    availableLanguage: ['English', 'Russian', 'Uzbek'],
+    availableLanguage: ['English', 'Uzbek', 'Russian'],
     currenciesAccepted: 'USD',
     priceRange: `${usd(Math.min(...tours.map(fromPrice)))}–${usd(Math.max(...tours.map((t) => fromPrice(t))))} per person`,
   },
@@ -99,7 +99,7 @@ const jsonLd = [
               ))}
             </ul>
           </div>
-          <p class="hero-langs">Plan in <span lang="en">English</span>, <span lang="ru">Русский</span> or <span lang="uz">Oʻzbekcha</span>.</p>
+          <p class="hero-langs">Plan in <span lang="en">English</span>, <span lang="uz">Oʻzbekcha</span> or <span lang="ru">Русский</span>.</p>
         </div>
         <div class="hero-arch" role="img" aria-label={arch.alt}></div>
       </div>
@@ -168,7 +168,7 @@ const jsonLd = [
           <ol class="steps">
             <li>
               <span class="step-n num" aria-hidden="true">1</span>
-              <div><h3>Tell us your trip</h3><p>Dates, who’s coming, what you love. Write it the way you’d say it, in English, Russian or Uzbek.</p></div>
+              <div><h3>Tell us your trip</h3><p>Dates, who’s coming, what you love. Write it the way you’d say it, in English, Uzbek or Russian.</p></div>
             </li>
             <li>
               <span class="step-n num" aria-hidden="true">2</span>
@@ -210,7 +210,7 @@ const jsonLd = [
             <p>Every route runs privately for your own party. Or join the {group.name}: it runs with as few as 2 travellers and never takes more than {group.max_group}.</p>
           </li>
           <li>
-            <h3><span lang="en">English</span>, <span lang="ru">Русский</span>, <span lang="uz">Oʻzbekcha</span></h3>
+            <h3><span lang="en">English</span>, <span lang="uz">Oʻzbekcha</span>, <span lang="ru">Русский</span></h3>
             <p>Plan in your own language, from the first question to the booking request.</p>
           </li>
           <li>

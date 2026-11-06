@@ -3,7 +3,7 @@ export const SITE = {
   url: 'https://tours.fhsystems.dev',
   tagline: 'Private & small-group journeys across Uzbekistan',
   description:
-    'Private and small-group journeys across Samarkand, Bukhara, Khiva and beyond. Describe your trip, get an instant price for your group, and a consultant confirms within 24 hours.',
+    'Private and small-group journeys across Samarkand, Bukhara, Khiva and beyond. Describe your trip in English, Uzbek or Russian, get an instant price for your group, and a consultant confirms within 24 hours.',
 };
 
 /** Same starters the planner shows on its own welcome screen. */

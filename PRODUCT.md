@@ -4,7 +4,7 @@
 An Uzbekistan tour operator website whose core is a conversational trip planner. Travellers describe their trip, get a tour recommendation and an instant price for their group, and a human consultant confirms within 24 hours. Demonstration brand built on real 2026 prices.
 
 ## Audience
-International travellers (English, Russian, Uzbek speakers) planning a first or second trip to Uzbekistan: couples, families, solo travellers, small groups of friends. They are comparing operators on trust, clarity of price and how much effort planning takes.
+International travellers (English, Uzbek and Russian speakers) planning a first or second trip to Uzbekistan: couples, families, solo travellers, small groups of friends. They are comparing operators on trust, clarity of price and how much effort planning takes.
 
 ## The one thing to prove
 Planning starts by just asking: the hero is the conversation starter, and it hands off to the planner at /plan with the question already sent.
