@@ -5,3 +5,5 @@ dist/
 test-results/
 playwright-report/
 .impeccable/config.local.json
+.vercel
+.env*
