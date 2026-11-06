@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Firdavs Tours API · docs</title>
+<meta name="description" content="Quote, departures and booking-request API behind the Firdavs Tours AI travel agent.">
+<style>
+:root{--bg:#0d1b2e;--card:#13253d;--line:#22395a;--text:#f3efe6;--mute:#a9b4c4;--accent:#3cc6c0;--gold:#d9b46a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+main{max-width:880px;margin:0 auto;padding:48px 20px 64px}
+h1{font-family:Georgia,'Times New Roman',serif;font-weight:600;font-size:2.2rem;margin:0 0 4px}
+h1 span{color:var(--gold)}.lead{color:var(--mute);margin:0 0 32px}
+.badge{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:999px;padding:4px 12px;font-size:.85rem;color:var(--mute)}
+.dot{width:8px;height:8px;border-radius:50%;background:#888}.dot.ok{background:var(--accent)}
+h2{font-family:Georgia,serif;font-weight:600;margin:40px 0 12px;font-size:1.3rem}
+.ep{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:12px 0}
+.ep b{display:inline-block;min-width:52px;color:var(--bg);background:var(--accent);border-radius:6px;padding:0 8px;margin-right:8px;font-size:.8rem;text-align:center}
+.ep b.post{background:var(--gold)}code,pre{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.88rem}
+pre{background:#0a1626;border:1px solid var(--line);border-radius:10px;padding:14px;overflow:auto;color:#cfe9e7}
+.ep p{margin:6px 0 0;color:var(--mute)}a{color:var(--accent)}
+ul{color:var(--mute);padding-left:20px}footer{margin-top:48px;color:var(--mute);font-size:.85rem}
+</style>
+</head>
+<body>
+<main>
+  <h1>Firdavs Tours <span>API</span></h1>
+  <p class="lead">Pricing, departures and booking requests for the Firdavs Tours AI travel agent. The agent never calculates prices itself; it calls this API.</p>
+  <span class="badge" id="status"><span class="dot"></span>Checking status…</span>
+
+  <h2>Endpoints</h2>
+  <div class="ep"><b>GET</b><code>/api/tours</code><p>All 14 tours: id, name, days, cities, themes.</p></div>
+  <div class="ep"><b>GET</b><code>/api/quote?tour=classic-8&amp;pax=2&amp;class=comfort</code><p>Per-person price, single supplement (solo), total, custom-group flag (10+), includes / excludes.</p></div>
+  <div class="ep"><b>GET</b><code>/api/departures?tour=classic-group-8&amp;from=2027-03-01</code><p>Upcoming fixed departures for the small-group tour; private tours run any date.</p></div>
+  <div class="ep"><b class="post">POST</b><code>/api/requests</code><p>Saves a booking request and returns a reference like <code>FT-MW3M4CBG8BM</code>. Validated, rate-limited (5 / 10 min / IP), idempotent with an <code>Idempotency-Key</code> header.</p></div>
+  <div class="ep"><b>GET</b><code>/api/health</code><p>Uptime check: storage mode, tour count, server time.</p></div>
+
+  <h2>Try it</h2>
+  <pre>curl "https://tours.fhsystems.dev/api/quote?tour=classic-8&amp;pax=1&amp;class=premium"
+# {"ok":true,"quote":{"per_person_usd":6080,"single_supplement_usd":950,"total_usd":7030,...}}</pre>
+
+  <h2>How it is built</h2>
+  <ul>
+    <li>Node 20 serverless functions on Vercel, zero runtime dependencies</li>
+    <li>Upstash Redis for requests, rate limits and idempotency keys</li>
+    <li>Single source of truth for prices in <code>lib/tours.json</code>; 16 automated tests</li>
+    <li>Optional Telegram alert to the sales team on every new request</li>
+  </ul>
+  <footer>Built by Firdavs Gafurjonov · Nov 2026</footer>
+</main>
+<script>
+fetch('/api/health').then(r=>r.json()).then(d=>{const s=document.getElementById('status');s.innerHTML='<span class="dot ok"></span>Operational · '+d.tours+' tours · storage: '+d.storage}).catch(()=>{document.getElementById('status').textContent='Status unavailable'});
+</script>
+</body>
+</html>
