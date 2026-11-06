@@ -2,119 +2,23 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Firdavs Tours · AI travel agent for Uzbekistan — case study</title>
-<meta name="description" content="A multilingual AI sales agent for an Uzbekistan tour operator: live quotes from an API, booking requests saved end to end, and a 25-case regression suite taken from 48% to 100%.">
-<meta property="og:title" content="Firdavs Tours · AI travel agent for Uzbekistan">
-<meta property="og:description" content="Live quotes, real booking capture, English / Russian / Uzbek. Built by Firdavs Gafurjonov.">
-<meta name="theme-color" content="#0d1b2e">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Firdavs Tours · Plan your trip to Uzbekistan</title>
+<meta name="description" content="Private and small-group journeys across Uzbekistan. Get a tour recommendation and an instant price for your group in English, Russian or Uzbek.">
+<meta property="og:title" content="Firdavs Tours · Plan your trip to Uzbekistan">
+<meta property="og:description" content="Private and small-group journeys across Samarkand, Bukhara, Khiva and beyond. Instant prices, 24-hour consultant reply.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://tours.fhsystems.dev/">
+<meta name="theme-color" content="#0f1a2e">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23123b3f'/%3E%3Cpath d='M32 12c2 12 8 18 20 20-12 2-18 8-20 20-2-12-8-18-20-20 12-2 18-8 20-20z' fill='%233cc6c0'/%3E%3C/svg%3E">
 <style>
-:root{--bg:#0d1b2e;--card:#13253d;--line:#22395a;--text:#f3efe6;--mute:#a9b4c4;--accent:#3cc6c0;--gold:#d9b46a}
-*{box-sizing:border-box}html{scroll-behavior:smooth}
-body{margin:0;background:var(--bg);color:var(--text);font:16px/1.65 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
-a{color:var(--accent)}a:focus-visible,button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
-.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
-header{padding:20px 0;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
-.brand{display:flex;align-items:center;gap:10px;font-family:Georgia,serif;font-size:1.15rem}
-.mark{width:34px;height:34px;border-radius:10px;background:#123b3f;display:grid;place-items:center;color:var(--accent);font-size:18px}
-nav a{color:var(--mute);text-decoration:none;margin-left:18px;font-size:.95rem}nav a:hover{color:var(--text)}
-.hero{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start;padding:28px 0 56px}
-h1{font-family:Georgia,'Times New Roman',serif;font-weight:600;font-size:clamp(2rem,4.2vw,3.1rem);line-height:1.12;margin:0 0 14px}
-h1 span{color:var(--gold)}
-.lead{color:var(--mute);font-size:1.08rem;margin:0 0 22px}
-.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:26px}
-.chip{border:1px solid var(--line);border-radius:999px;padding:4px 12px;font-size:.85rem;color:var(--mute)}
-.btns{display:flex;gap:12px;flex-wrap:wrap}
-.btn{display:inline-block;padding:11px 18px;border-radius:10px;text-decoration:none;font-weight:500}
-.btn.p{background:var(--accent);color:#06222a}.btn.s{border:1px solid var(--line);color:var(--text)}
-.frame{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#0a1626;height:640px}
-.frame iframe{width:100%;height:100%;border:0;display:block}
-.note{font-size:.82rem;color:var(--mute);margin-top:8px}
-section{padding:44px 0;border-top:1px solid var(--line)}
-h2{font-family:Georgia,serif;font-weight:600;font-size:1.6rem;margin:0 0 18px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px}
-.card h3{margin:0 0 6px;font-size:1.02rem}.card p{margin:0;color:var(--mute);font-size:.95rem}
-.stat{font-family:Georgia,serif;font-size:2.1rem;color:var(--gold);line-height:1.1}
-.bar{display:flex;align-items:center;gap:12px;margin:10px 0}.bar b{width:130px;font-weight:500;font-size:.95rem}
-.track{flex:1;height:12px;background:#0a1626;border:1px solid var(--line);border-radius:99px;overflow:hidden}
-.fill{height:100%;background:var(--accent)}.bar span{width:52px;text-align:right;color:var(--mute);font-size:.9rem}
-.flow{display:flex;flex-wrap:wrap;align-items:center;gap:10px;font-size:.95rem}
-.flow .n{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px}
-.flow .a{color:var(--mute)}
-ul.clean{padding-left:18px;color:var(--mute)}ul.clean li{margin:4px 0}
-footer{padding:36px 0 56px;color:var(--mute);font-size:.9rem;border-top:1px solid var(--line)}
-@media (max-width:860px){.hero{grid-template-columns:1fr}.frame{height:560px}nav{display:none}}
+html,body{margin:0;height:100%;background:#0f1a2e;overflow:hidden}
+iframe{position:fixed;inset:0;width:100%;height:100%;height:100dvh;border:0;display:block;background:#0f1a2e}
+noscript{color:#f3efe6;font:16px system-ui;display:block;padding:24px}
 </style>
 </head>
 <body>
-<div class="wrap">
-<header>
-  <div class="brand"><div class="mark" aria-hidden="true">✦</div>Firdavs Tours <span style="color:var(--mute);font-family:system-ui;font-size:.9rem">· case study</span></div>
-  <nav><a href="#how">How it works</a><a href="#results">Results</a><a href="#api">API</a><a href="https://github.com/gfirik/firdavs-tours-api">GitHub</a></nav>
-</header>
-
-<div class="hero">
-  <div>
-    <h1>An AI travel agent that <span>quotes and books</span>, not just chats</h1>
-    <p class="lead">A sales assistant for an Uzbekistan tour operator. It recommends one of 14 real tours, quotes exact prices from an API (never from the model), and saves a booking request with a reference number. In English, Russian and Uzbek.</p>
-    <div class="chips"><span class="chip">Agentplace · Luna model</span><span class="chip">Node 20 serverless</span><span class="chip">Upstash Redis</span><span class="chip">25-case regression suite</span></div>
-    <div class="btns"><a class="btn p" href="https://ig63smceaks7.run.agentplace.io" target="_blank" rel="noopener">Open the agent full screen</a><a class="btn s" href="#results">See the results</a></div>
-    <p class="note" style="margin-top:18px">Try: “2 of us, April, comfort hotels, we love old architecture” · “Мы вдвоём, май, недорого, природа” · “Oilam bilan 4 kishi, standart”</p>
-  </div>
-  <div>
-    <div class="frame"><iframe src="https://ig63smceaks7.run.agentplace.io" title="Firdavs Tours AI travel agent" allow="microphone; clipboard-write" loading="lazy"></iframe></div>
-    <p class="note">Live demo. Booking requests go to a real endpoint; please mark test bookings as “test”.</p>
-  </div>
-</div>
-
-<section id="how">
-  <h2>How it works</h2>
-  <div class="flow" style="margin-bottom:22px">
-    <div class="n">Traveller</div><div class="a">→</div><div class="n">AI agent (Agentplace)</div><div class="a">→ tool calls →</div><div class="n">Quote / departures / requests API</div><div class="a">→</div><div class="n">Redis + sales-team alert</div>
-  </div>
-  <div class="grid">
-    <div class="card"><h3>Prices can’t drift</h3><p>Every number comes from <code>/api/quote</code>: tier by group size, hotel class, single supplement, 10+ groups flagged as a starting price.</p></div>
-    <div class="card"><h3>Real lead capture</h3><p>Summary card → “Shall I send this request?” → <code>POST /api/requests</code> → reference number like FT-MW3QD2VY45I.</p></div>
-    <div class="card"><h3>Three languages</h3><p>Answers and tour cards fully in the traveller’s language; only tour names stay in English.</p></div>
-    <div class="card"><h3>Safe by design</h3><p>No invented tours or discounts, no payments in chat, visa answers point to e-visa.gov.uz, off-topic requests politely declined.</p></div>
-  </div>
-</section>
-
-<section id="results">
-  <h2>Results</h2>
-  <div class="grid" style="margin-bottom:20px">
-    <div class="card"><div class="stat">25 / 25</div><p>regression cases passing</p></div>
-    <div class="card"><div class="stat">0</div><p>invented prices or tours across all runs</p></div>
-    <div class="card"><div class="stat">16</div><p>automated API tests</p></div>
-  </div>
-  <div class="card">
-    <div class="bar"><b>Run 1</b><div class="track"><div class="fill" style="width:48%"></div></div><span>48%</span></div>
-    <div class="bar"><b>Run 2 · fixes</b><div class="track"><div class="fill" style="width:76%"></div></div><span>76%</span></div>
-    <div class="bar"><b>Run 3a · redesign</b><div class="track"><div class="fill" style="width:44%;background:var(--gold)"></div></div><span>44%</span></div>
-    <div class="bar"><b>Run 3b · final</b><div class="track"><div class="fill" style="width:100%"></div></div><span>100%</span></div>
-    <p class="note" style="margin-top:12px">The dip in run 3a came from a pure UI change (new tour cards). The regression suite caught it before launch.</p>
-  </div>
-  <ul class="clean" style="margin-top:18px">
-    <li>Biggest single fix: moving prices out of the prompt into a tool call, and giving the agent a real “submit request” action.</li>
-    <li>Quote first, ask later: dates don’t change the price, so the agent quotes immediately and asks at most one question.</li>
-    <li>Customer language rules: no “API”, “catalogue” or repeated disclaimers in front of travellers.</li>
-  </ul>
-</section>
-
-<section id="api">
-  <h2>API</h2>
-  <div class="grid">
-    <div class="card"><h3>Endpoints</h3><p><code>/api/tours</code> · <code>/api/quote</code> · <code>/api/departures</code> · <code>POST /api/requests</code> · <code>/api/health</code></p></div>
-    <div class="card"><h3>Hardening</h3><p>Per-IP rate limit, idempotency keys (no duplicate leads on retries), honeypot, Telegram alert to sales.</p></div>
-    <div class="card"><h3>Stack</h3><p>Node 20 serverless on Vercel, zero runtime dependencies, Upstash Redis, 16 tests.</p></div>
-  </div>
-  <p style="margin-top:16px"><a href="/docs.html">API docs</a> · <a href="https://github.com/gfirik/firdavs-tours-api">Source on GitHub</a></p>
-</section>
-
-<footer>
-  Built by <a href="https://www.linkedin.com/in/firdavs-gafurjonov">Firdavs Gafurjonov</a> · <a href="https://fhsystems.dev">fhsystems.dev</a> · Tashkent, 2026. Firdavs Tours is a demo brand built on real 2026 market data; prices are estimates.
-</footer>
-</div>
+<iframe src="https://ig63smceaks7.run.agentplace.io" title="Firdavs Tours" allow="microphone; clipboard-write"></iframe>
+<noscript>Firdavs Tours needs JavaScript to plan your trip.</noscript>
 </body>
 </html>

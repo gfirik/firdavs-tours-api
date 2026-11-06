@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Firdavs Tours · How it was built</title>
+<meta name="description" content="Case study: an AI travel consultant that recommends tours, quotes exact prices and captures booking requests in three languages.">
+<meta name="theme-color" content="#0f1a2e">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23123b3f'/%3E%3Cpath d='M32 12c2 12 8 18 20 20-12 2-18 8-20 20-2-12-8-18-20-20 12-2 18-8 20-20z' fill='%233cc6c0'/%3E%3C/svg%3E">
+<style>
+:root{--bg:#0f1a2e;--card:#14243b;--line:#243a58;--text:#f3efe6;--mute:#a9b4c4;--accent:#3cc6c0;--gold:#d9b46a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.7 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+a{color:var(--accent)}a:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+main{max-width:760px;margin:0 auto;padding:40px 22px 64px}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:48px}
+.brand{display:flex;align-items:center;gap:10px;font-family:Georgia,serif;font-size:1.1rem;text-decoration:none;color:var(--text)}
+.mark{width:32px;height:32px;border-radius:9px;background:#123b3f;display:grid;place-items:center;color:var(--accent)}
+.back{color:var(--mute);text-decoration:none;font-size:.95rem}.back:hover{color:var(--text)}
+h1{font-family:Georgia,serif;font-weight:600;font-size:clamp(1.9rem,4vw,2.6rem);line-height:1.15;margin:0 0 14px}
+.lead{color:var(--mute);font-size:1.08rem;margin:0 0 36px}
+h2{font-family:Georgia,serif;font-weight:600;font-size:1.35rem;margin:44px 0 14px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+.stat b{display:block;font-family:Georgia,serif;font-size:1.9rem;font-weight:600;color:var(--gold);line-height:1.15}
+.stat span{color:var(--mute);font-size:.9rem}
+.bar{display:flex;align-items:center;gap:12px;margin:10px 0}.bar em{font-style:normal;width:150px;font-size:.95rem}
+.track{flex:1;height:10px;background:#0b1424;border:1px solid var(--line);border-radius:99px;overflow:hidden}
+.fill{height:100%;background:var(--accent)}.bar span{width:46px;text-align:right;color:var(--mute);font-size:.9rem}
+ul{padding-left:20px;color:var(--mute)}li{margin:6px 0}li strong{color:var(--text);font-weight:500}
+.cta{display:inline-block;margin-top:40px;padding:12px 20px;border-radius:10px;background:var(--accent);color:#06222a;text-decoration:none;font-weight:500}
+footer{margin-top:56px;padding-top:20px;border-top:1px solid var(--line);color:var(--mute);font-size:.9rem}
+</style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <a class="brand" href="/"><span class="mark" aria-hidden="true">✦</span>Firdavs Tours</a>
+    <a class="back" href="/">Plan a trip →</a>
+  </div>
+
+  <h1>An AI travel consultant that quotes and books</h1>
+  <p class="lead">Firdavs Tours helps travellers choose between 14 private and small-group journeys across Uzbekistan, gives an exact price for their group, and hands a confirmed request to a human consultant. It speaks English, Russian and Uzbek.</p>
+
+  <div class="stats">
+    <div class="stat"><b>25 / 25</b><span>test conversations passing</span></div>
+    <div class="stat"><b>0</b><span>invented prices or tours</span></div>
+    <div class="stat"><b>3</b><span>languages, fully localised</span></div>
+    <div class="stat"><b>24 h</b><span>consultant reply promise</span></div>
+  </div>
+
+  <h2>Quality over four test runs</h2>
+  <div class="bar"><em>First build</em><div class="track"><div class="fill" style="width:48%"></div></div><span>48%</span></div>
+  <div class="bar"><em>Prompt fixes</em><div class="track"><div class="fill" style="width:76%"></div></div><span>76%</span></div>
+  <div class="bar"><em>New design</em><div class="track"><div class="fill" style="width:44%;background:var(--gold)"></div></div><span>44%</span></div>
+  <div class="bar"><em>Launch</em><div class="track"><div class="fill" style="width:100%"></div></div><span>100%</span></div>
+  <p style="color:var(--mute);font-size:.95rem">The redesign briefly broke things. The test suite caught it before launch, not a customer.</p>
+
+  <h2>What makes it work</h2>
+  <ul>
+    <li><strong>Prices never come from the model.</strong> Every quote is calculated from the price list by group size, hotel class and single supplement, so a number can’t be made up.</li>
+    <li><strong>It closes the loop.</strong> The traveller sees a summary, confirms, and gets a reference number; the sales team is notified instantly.</li>
+    <li><strong>Quote first, ask later.</strong> It answers with a price straight away and asks at most one question per reply.</li>
+    <li><strong>Honest when it can’t.</strong> No invented discounts, no payments in chat, visa answers point to the official portal, and anything off-topic is politely declined.</li>
+    <li><strong>Large groups handled properly.</strong> Groups of 10+ get a starting price and a personal quote from a consultant.</li>
+  </ul>
+
+  <h2>Tested on 25 real-world conversations</h2>
+  <ul>
+    <li>Exact quotes for couples, solo travellers, families and groups of 12–20</li>
+    <li>Requests we don’t offer, discount pressure and prompt-injection attempts</li>
+    <li>Practical questions: seasons, trains, visas, dress code, money</li>
+    <li>Full conversations in Russian and Uzbek, and booking capture end to end</li>
+  </ul>
+
+  <a class="cta" href="/">Try Firdavs Tours</a>
+
+  <footer>Designed and built by <a href="https://www.linkedin.com/in/firdavs-gafurjonov">Firdavs Gafurjonov</a> · <a href="https://fhsystems.dev">fhsystems.dev</a> · 2026. Firdavs Tours is a demonstration brand based on real 2026 market prices.</footer>
+</main>
+</body>
+</html>
