@@ -1,0 +1,128 @@
+---
+import Base from '../layouts/Base.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import Icon from '../components/Icon.astro';
+import TileField from '../components/TileField.astro';
+import { tours } from '../lib/catalogue';
+
+// Figures from the 25-conversation test set results (runs 1, 2, 3a, 3b).
+const RUNS = [
+  { label: 'First build', pass: 12, note: '' },
+  { label: 'Instruction fixes', pass: 19, note: '' },
+  { label: 'New design', pass: 11, note: 'Regression' },
+  { label: 'Launch', pass: 25, note: '' },
+];
+const TOTAL = 25;
+const pct = (n: number) => Math.round((n / TOTAL) * 100);
+---
+<Base
+  title="How it was built · Firdavs Tours"
+  description="Case study: a multilingual travel consultant that recommends Uzbekistan tours, quotes exact prices and hands confirmed requests to a human, tested on 25 real-world conversations."
+  path="/about"
+>
+  <Header />
+  <main id="main">
+    <section class="intro">
+      <TileField class="intro-tiles" id="about-tile" />
+      <div class="wrap narrow">
+        <h1>A travel consultant that quotes, and closes the loop</h1>
+        <p class="lede">Firdavs Tours helps travellers choose between {tours.length} private and small-group journeys across Uzbekistan, gives an exact price for their group, and hands a confirmed request to a human consultant. It speaks English, Russian and Uzbek.</p>
+        <dl class="figures">
+          <div><dt>Test conversations passing</dt><dd class="num">25/25</dd></div>
+          <div><dt>Invented prices or tours</dt><dd class="num">0</dd></div>
+          <div><dt>Languages, end to end</dt><dd class="num">3</dd></div>
+          <div><dt>Consultant reply promise</dt><dd class="num">24 h</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <section class="wrap narrow block" aria-labelledby="runs-title">
+      <h2 id="runs-title">Quality over four test runs</h2>
+      <p class="sub">Strict pass rate on the same 25 scripted conversations. A pass must be correct, grounded in the price list, short, in the traveller’s language, and move toward a request.</p>
+      <figure class="chart">
+        <ol class="bars" aria-hidden="true">
+          {RUNS.map((r) => (
+            <li class:list={{ regress: !!r.note }}>
+              <span class="b-label">{r.label}{r.note && <em>{r.note}</em>}</span>
+              <span class="b-track"><span class="b-fill" style={`--w:${pct(r.pass)}%`} title={`${r.label}: ${r.pass} of ${TOTAL} (${pct(r.pass)}%)`}></span></span>
+              <span class="b-val num">{pct(r.pass)}%</span>
+            </li>
+          ))}
+        </ol>
+        <table class="sr-only">
+          <caption>Strict pass rate by test run</caption>
+          <thead><tr><th scope="col">Run</th><th scope="col">Passed</th><th scope="col">Rate</th></tr></thead>
+          <tbody>{RUNS.map((r) => <tr><th scope="row">{r.label}{r.note && ` (${r.note.toLowerCase()})`}</th><td>{r.pass} of {TOTAL}</td><td>{pct(r.pass)}%</td></tr>)}</tbody>
+        </table>
+        <figcaption>A redesign of the reply cards briefly broke things. The test suite caught it before launch, not a customer.</figcaption>
+      </figure>
+    </section>
+
+    <section class="wrap narrow block" aria-labelledby="works-title">
+      <h2 id="works-title">What makes it work</h2>
+      <ul class="points">
+        <li><h3>Prices never come from the language model</h3><p>Every quote is calculated from the price list by group size, hotel class and single supplement, so a number can’t be made up. Moving prices out of the instructions and into a calculation mattered more than any wording change.</p></li>
+        <li><h3>It closes the loop</h3><p>The traveller sees a summary, confirms, and gets a reference number; the sales team is notified at once. Retries never create a duplicate request.</p></li>
+        <li><h3>Quote first, ask later</h3><p>It answers with a price straight away and asks at most one question per reply. Dates don’t change the price, so they never block a quote.</p></li>
+        <li><h3>Honest when it can’t</h3><p>No invented discounts, no payments in chat, visa answers point to the official portal, and anything off-topic is politely declined.</p></li>
+        <li><h3>Large groups handled properly</h3><p>Private groups of ten or more see a starting rate, and a consultant prepares their group price.</p></li>
+      </ul>
+    </section>
+
+    <section class="wrap narrow block" aria-labelledby="tested-title">
+      <h2 id="tested-title">Tested on 25 real-world conversations</h2>
+      <ul class="tested">
+        <li>Exact quotes for couples, solo travellers, families and groups of 12 to 20</li>
+        <li>Requests we don’t offer, discount pressure and attempts to override its rules</li>
+        <li>Practical questions: seasons, trains, visas, dress code, money</li>
+        <li>Full conversations in Russian and Uzbek, and booking capture end to end</li>
+      </ul>
+      <h2 class="next-title">What comes next</h2>
+      <p class="sub">Turn the 25 cases into an automated regression suite that runs on every instruction or design change, add ten more Russian and Uzbek edge cases, and track the share of conversations that end in a confirmed request.</p>
+      <a class="btn btn-primary cta" href="/plan">Try the planner <Icon name="arrow" /></a>
+    </section>
+  </main>
+  <Footer note="Firdavs Tours is a demonstration brand based on real 2026 prices. Designed and built by Firdavs Gafurjonov." />
+</Base>
+
+<style>
+  .narrow { max-width: 780px; }
+  .intro { position: relative; isolation: isolate; overflow: hidden; padding-block: clamp(56px, 10vw, 120px) clamp(48px, 7vw, 80px); border-bottom: 1px solid var(--line-soft); }
+  .intro :global(.intro-tiles) { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -1; -webkit-mask-image: linear-gradient(180deg, #000, transparent 85%); mask-image: linear-gradient(180deg, #000, transparent 85%); }
+  h1 { font-size: clamp(2.6rem, 6.4vw, 4.4rem); line-height: 1; letter-spacing: -0.02em; margin-bottom: 22px; }
+  .lede { font-size: 1.15rem; }
+  .figures { margin: 44px 0 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 1px solid var(--line); }
+  @media (min-width: 720px) { .figures { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  .figures div { padding: 18px 16px 4px 0; display: flex; flex-direction: column-reverse; gap: 4px; }
+  .figures dd { margin: 0; font-family: var(--serif); font-size: clamp(2.2rem, 4.6vw, 2.9rem); font-weight: 600; line-height: 1; color: var(--gold-ink); }
+  .figures dt { color: var(--muted); font-size: 0.93rem; }
+
+  .block { padding-block: clamp(56px, 8vw, 88px) 0; }
+  .block h2 { font-size: clamp(1.9rem, 3.6vw, 2.6rem); margin-bottom: 14px; }
+  .sub { color: var(--muted); max-width: 40rem; }
+
+  .chart { margin: 32px 0 0; padding: clamp(18px, 3vw, 28px); background: var(--surface); border: 1px solid var(--line-soft); border-radius: var(--radius-lg); --bar: #249e99; --bar-alt: #b08a3a; }
+  @media (prefers-color-scheme: light) { .chart { --bar: #0a948d; --bar-alt: #b98a2e; } }
+  .bars { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+  .bars li { display: grid; grid-template-columns: minmax(118px, 160px) 1fr 48px; align-items: center; gap: 14px; }
+  .b-label { font-size: 0.97rem; display: grid; line-height: 1.25; }
+  .b-label em { font-style: normal; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.02em; color: var(--gold-ink); }
+  .b-track { height: 14px; border-radius: 4px; background: color-mix(in oklab, var(--line) 40%, transparent); overflow: hidden; }
+  .b-fill { display: block; height: 100%; width: var(--w); border-radius: 0 4px 4px 0; background: var(--bar); transform-origin: left; animation: grow 1.1s var(--ease) both; }
+  .regress .b-fill { background: repeating-linear-gradient(135deg, var(--bar-alt) 0 6px, color-mix(in oklab, var(--bar-alt) 70%, var(--surface)) 6px 9px); }
+  .b-val { text-align: right; font-weight: 600; }
+  @keyframes grow { from { transform: scaleX(0); } }
+  .chart figcaption { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line-soft); color: var(--muted); font-size: 0.95rem; }
+  @media (max-width: 420px) { .bars li { grid-template-columns: 1fr 44px; row-gap: 6px; } .b-label { grid-column: 1 / -1; } }
+
+  .points { list-style: none; margin: 24px 0 0; padding: 0; border-top: 1px solid var(--line); }
+  .points li { padding: 22px 0; border-bottom: 1px solid var(--line-soft); display: grid; gap: 6px; }
+  .points h3 { font-size: 1.5rem; }
+  .points p { color: var(--muted); }
+  .tested { margin: 16px 0 0; padding-left: 0; list-style: none; display: grid; gap: 10px; color: var(--muted); }
+  .tested li { padding-left: 22px; position: relative; }
+  .tested li::before { content: ''; position: absolute; left: 3px; top: 0.6em; width: 7px; height: 7px; background: var(--gold); transform: rotate(45deg); border-radius: 1px; }
+  .next-title { margin-top: 48px; }
+  .cta { margin: 36px 0 clamp(72px, 10vw, 112px); }
+</style>

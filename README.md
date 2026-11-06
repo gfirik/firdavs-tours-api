@@ -1,28 +1,69 @@
-# Firdavs Tours API
+# Firdavs Tours
 
-Small serverless API used by the Firdavs Tours Agentplace agent.
+**Plan Uzbekistan in one conversation.** Firdavs Tours is a travel site for private and small-group journeys across Uzbekistan. Travellers describe their trip in English, Russian or Uzbek, get a route and an exact price for their group in seconds, and a human consultant confirms within 24 hours.
 
-| Endpoint | What it does |
+**Live:** https://tours.fhsystems.dev
+
+| Landing | Planner |
 |---|---|
-| `GET /api/tours` | List of the 14 tours |
-| `GET /api/quote?tour=classic-8&pax=2&class=comfort` | Exact price: per person, single supplement, total, large-group flag |
-| `GET /api/departures?tour=classic-group-8&from=2027-02-01` | Next fixed departures (group tour) or "private, runs all year" |
-| `POST /api/requests` | Saves a booking request, returns `request_id`. Validates name, email/Telegram, tour, travellers, class, dates. Rate limit 5 per 10 min per IP; `Idempotency-Key` header prevents duplicates on retries; honeypot field `website` blocks form bots |
-| `GET /api/health` | Uptime check (storage mode, tour count) |
-| `GET /api/requests` | Team view of saved requests (needs `Authorization: Bearer $ADMIN_TOKEN`) |
+| ![Landing page, desktop](docs/screenshots/home-desktop.png) | ![Planner, desktop](docs/screenshots/plan-desktop.png) |
 
-No dependencies. Node 20+. Tests: `npm test` (16 tests). Landing/docs page: `public/index.html`.
+| Landing at 360px | Planner at 360px | Light theme |
+|---|---|---|
+| <img src="docs/screenshots/home-mobile-360.png" width="240" alt="Landing page at 360px"> | <img src="docs/screenshots/plan-mobile-360.png" width="240" alt="Planner at 360px"> | ![Landing page, light theme](docs/screenshots/home-light-desktop.png) |
 
-Optional env: `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` → the sales team gets a Telegram message on every new request.
+## What's here
 
-## Deploy (Vercel, ~5 min)
-1. Push this folder to a new GitHub repo (e.g. `firdavs-tours-api`).
-2. Vercel → New Project → import the repo → Deploy (no build settings needed).
-3. Storage: Vercel → Storage → Upstash Redis (free) → connect to the project (adds `KV_REST_API_URL` / `KV_REST_API_TOKEN`). Without it, requests are kept in memory (demo only).
-4. Add env var `ADMIN_TOKEN` (any long random string) → Redeploy.
-5. Give the deployed URL to the Agentplace builder: "call GET /api/quote for prices and POST /api/requests when the traveller books".
+| Route | What it is |
+|---|---|
+| `/` | Landing page. The hero *is* the conversation starter: type a question or tap a starter and the planner opens with it already asked. Featured journeys, how it works, destinations, FAQ |
+| `/plan` | The trip planner, full-screen and seamless |
+| `/about` | Case study: how the planner was tested (48% → 76% → 44% → 100% on 25 conversations) |
+| `/credits` | Photo credits (Wikimedia Commons) |
+| `/api/*` | Quote, departures and booking-request functions the planner uses as tools, documented in [docs/API.md](docs/API.md) |
 
-## Production notes
-- Prices live in `lib/tours.json`; in production this would be a CMS/DB with an admin UI.
-- Done: per-IP rate limit, honeypot, idempotency keys, Telegram alerts, health check.
-- Next: admin UI for prices and request status, signed webhook for the CRM, structured logs + alerting.
+The question reaches the planner over the planner's own parent-frame message channel, with a clipboard fallback. See [docs/AGENT_HANDOFF.md](docs/AGENT_HANDOFF.md).
+
+## Stack
+
+- **Astro 6**, static output, no client framework. Images go through `astro:assets` (AVIF/WebP, responsive, lazy), and the fonts are self-hosted (Cormorant Garamond, Source Sans 3).
+- **Vercel**: `dist/` for the site, zero-config Node functions in `api/`, Upstash Redis for booking requests.
+- **Single source of truth:** `lib/tours.json` drives both the site (names, routes, highlights, "from" prices, departures) and the quote API.
+- Follows the OS light/dark scheme, the same as the planner. No analytics or tracking.
+
+## Run
+
+Requires Node 22.
+
+```bash
+npm install
+npm run dev        # http://localhost:4321  (the functions in api/ run under `vercel dev`)
+npm run build      # static site → dist/
+npm run preview
+```
+
+## Tests
+
+```bash
+npm test                          # 16 unit tests: pricing tiers, supplements, departures, validation, idempotency, rate limit, auth
+npm run test:e2e                  # Playwright smoke tests (desktop + 360px), against a local build
+PW_CHANNEL=chrome npm run test:e2e                 # use the installed Chrome instead of Playwright's browser
+BASE_URL=https://<deployment> npm run test:e2e     # run against a deployment
+LIVE=1 npm run test:e2e -g "live planner"          # one round trip through the real planner
+```
+
+The e2e suite covers the landing page, real prices on every tour card, JSON-LD, hero submit, chip and card handoff (against a protocol stub, so runs cost nothing), the clipboard fallback, /plan full-screen geometry, /about, 404, robots and sitemap, horizontal overflow at 360px, and a check that no page shows implementation words.
+
+## Project layout
+
+```
+api/            serverless functions (quote, departures, requests, tours, health)
+lib/            tours.json + pricing/validation core shared by functions and site
+src/pages/      index, plan, about, credits, 404, robots.txt, sitemap.xml
+src/components/ header, footer, brand mark, tile field, icons
+src/assets/     photographs (see /credits)
+e2e/            Playwright smoke tests
+docs/           API reference, handoff notes, screenshots
+```
+
+Firdavs Tours is a demonstration brand based on real 2026 prices. Built by [fhsystems](https://fhsystems.dev).

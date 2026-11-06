@@ -1,0 +1,172 @@
+---
+import Base from '../layouts/Base.astro';
+import Mark from '../components/Mark.astro';
+import Icon from '../components/Icon.astro';
+import { PLANNER_ORIGIN } from '../lib/site';
+---
+<Base
+  title="Plan your trip · Firdavs Tours"
+  description="Describe your trip to Uzbekistan and get a route and an exact price for your group in seconds. A consultant confirms within 24 hours."
+  path="/plan"
+  bodyClass="plan"
+>
+  <script slot="head" is:inline define:vars={{ ORIGIN: PLANNER_ORIGIN }}>
+    // Hand the traveller's first question to the planner.
+    // The planner announces itself to its parent with "SYN"; we answer "ACK" with a
+    // MessagePort and send the question as an `agent.message.send` notification,
+    // which the planner acknowledges by id. If that does not happen in time,
+    // fall back to the clipboard hint. See docs/AGENT_HANDOFF.md.
+    (function () {
+      var params = new URLSearchParams(location.search);
+      var q = (params.get('q') || '').trim().slice(0, 500);
+      if (params.has('q')) history.replaceState(null, '', '/plan' + location.hash);
+      window.__handoff = { q: q, state: q ? 'waiting' : 'none' };
+      if (!q) return;
+
+      var sent = false, pendingId = null, ackTimer = null;
+      var fail = function () {
+        if (window.__handoff.state === 'delivered') return;
+        window.__handoff.state = 'failed';
+        document.dispatchEvent(new CustomEvent('handoff:failed'));
+      };
+      var synTimer = setTimeout(fail, 25000);
+
+      window.addEventListener('message', function (e) {
+        var frame = document.getElementById('planner');
+        if (e.origin !== ORIGIN || !frame || e.source !== frame.contentWindow || e.data !== 'SYN') return;
+        var ch = new MessageChannel(), port = ch.port1;
+        port.onmessage = function (m) {
+          var d = m.data || {};
+          if (d.type === 'PING') port.postMessage({ id: d.id, type: 'PONG' });
+          else if (d.type === 'NOTIFY' || d.type === 'REQ') port.postMessage({ id: d.id, type: 'ACK' });
+          else if (d.type === 'ACK' && d.id === pendingId) {
+            clearTimeout(ackTimer);
+            window.__handoff.state = 'delivered';
+            document.dispatchEvent(new CustomEvent('handoff:delivered'));
+          }
+        };
+        port.start();
+        frame.contentWindow.postMessage('ACK', ORIGIN, [ch.port2]);
+        if (sent) return;
+        sent = true;
+        clearTimeout(synTimer);
+        pendingId = (crypto.randomUUID && crypto.randomUUID()) || String(Date.now()) + Math.random();
+        port.postMessage({ id: pendingId, type: 'NOTIFY', payload: { type: 'agent.message.send', message: q } });
+        ackTimer = setTimeout(fail, 5000);
+      });
+    })();
+  </script>
+
+  <main id="main" class="stage">
+    <div class="loading" aria-hidden="true" data-loading>
+      <Mark size={56} class="loading-mark" />
+      <p class="loading-text">Opening your planner…</p>
+      <p class="loading-q" data-loading-q></p>
+    </div>
+    <h1 class="sr-only">Plan your trip with Firdavs Tours</h1>
+    <iframe
+      id="planner"
+      src={PLANNER_ORIGIN}
+      title="Firdavs Tours trip planner"
+      allow="microphone; clipboard-write"
+    ></iframe>
+    <a class="home" href="/" aria-label="Back to Firdavs Tours home"><Icon name="home" /></a>
+
+    <div class="hint" role="status" aria-live="polite" hidden data-hint>
+      <p data-hint-text>Your trip is copied, paste it with <kbd>Ctrl</kbd>+<kbd>V</kbd> / <kbd>⌘</kbd><kbd>V</kbd></p>
+      <button type="button" class="hint-copy" data-hint-copy hidden><Icon name="copy" /> Copy my question</button>
+      <button type="button" class="hint-close" aria-label="Dismiss" data-hint-close><Icon name="close" /></button>
+    </div>
+  </main>
+  <noscript><p class="noscript">The trip planner needs JavaScript. You can still browse our <a href="/#tours">journeys</a>.</p></noscript>
+</Base>
+
+<script>
+  const h = (window as any).__handoff as { q: string; state: string };
+  const frame = document.getElementById('planner') as HTMLIFrameElement;
+  const loading = document.querySelector<HTMLElement>('[data-loading]')!;
+  const hint = document.querySelector<HTMLElement>('[data-hint]')!;
+  const hintText = document.querySelector<HTMLElement>('[data-hint-text]')!;
+  const copyBtn = document.querySelector<HTMLButtonElement>('[data-hint-copy]')!;
+
+  if (h?.q) {
+    document.querySelector('[data-loading-q]')!.textContent = `“${h.q}”`;
+    loading.style.viewTransitionName = 'planner';
+  }
+
+  // Reveal the planner once its page has painted its own (matching) background.
+  frame.addEventListener('load', () => setTimeout(() => document.body.classList.add('ready'), 350));
+
+  const copy = async () => {
+    try { await navigator.clipboard.writeText(h.q); return true; } catch { return false; }
+  };
+  const showHint = async () => {
+    if (await copy()) {
+      copyBtn.hidden = true;
+    } else {
+      hintText.textContent = 'We couldn’t pass your question to the planner. Copy it and paste it below.';
+      copyBtn.hidden = false;
+    }
+    hint.hidden = false;
+  };
+  if (h?.state === 'failed') showHint();
+  document.addEventListener('handoff:failed', showHint);
+  copyBtn.addEventListener('click', async () => {
+    if (await copy()) {
+      hintText.innerHTML = 'Your trip is copied, paste it with <kbd>Ctrl</kbd>+<kbd>V</kbd> / <kbd>⌘</kbd><kbd>V</kbd>';
+      copyBtn.hidden = true;
+    }
+  });
+  document.querySelector('[data-hint-close]')!.addEventListener('click', () => { hint.hidden = true; });
+</script>
+
+<style>
+  /* Matches the planner's own canvas in both schemes so the frame is invisible. */
+  :global(html), :global(body.plan) { height: 100%; overflow: hidden; }
+  :global(body.plan) { background: var(--bg); }
+  .stage { position: fixed; inset: 0; }
+  #planner {
+    position: absolute; inset: 0; width: 100%; height: 100%; height: 100dvh;
+    border: 0; display: block; background: transparent; color-scheme: normal;
+    opacity: 0; transition: opacity 0.5s var(--ease);
+  }
+  :global(body.ready) #planner { opacity: 1; }
+  .loading {
+    position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 14px;
+    padding: 24px; text-align: center; transition: opacity 0.4s;
+  }
+  :global(body.ready) .loading { opacity: 0; }
+  .loading :global(.loading-mark) { animation: breathe 2.2s var(--ease) infinite alternate; }
+  @keyframes breathe { from { transform: scale(0.94); opacity: 0.7; } to { transform: scale(1); opacity: 1; } }
+  .loading-text { color: var(--muted); }
+  .loading-q { font-family: var(--serif); font-size: clamp(1.4rem, 4vw, 2rem); font-weight: 600; max-width: 28ch; text-wrap: balance; }
+
+  .home {
+    position: absolute; top: max(12px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); z-index: 2;
+    width: 40px; height: 40px; display: grid; place-items: center; border-radius: 12px;
+    color: var(--muted); background: color-mix(in oklab, var(--surface) 70%, transparent); border: 1px solid var(--line-soft);
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .home:hover { color: var(--text); border-color: var(--line); }
+  .home :global(svg) { width: 19px; height: 19px; }
+
+  .hint {
+    position: absolute; z-index: 3; left: 50%; top: max(16px, env(safe-area-inset-top)); transform: translateX(-50%);
+    width: min(560px, calc(100% - 32px - 52px)); margin-right: 26px;
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    padding: 12px 12px 12px 18px; border-radius: 16px;
+    background: var(--surface); border: 1px solid var(--turq); box-shadow: var(--shadow);
+    animation: drop 0.5s var(--ease) both;
+  }
+  .hint[hidden] { display: none; }
+  .hint p { flex: 1 1 220px; font-size: 0.97rem; }
+  .hint kbd { font: 600 0.8em var(--sans); padding: 1px 6px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); }
+  .hint-copy { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 14px; border-radius: 999px; border: 0; background: var(--turq); color: var(--on-turq); font-weight: 600; cursor: pointer; }
+  .hint-copy[hidden] { display: none; }
+  .hint-copy :global(svg) { width: 16px; height: 16px; }
+  .hint-close { width: 36px; height: 36px; display: grid; place-items: center; border: 0; border-radius: 10px; background: transparent; color: var(--muted); cursor: pointer; }
+  .hint-close:hover { color: var(--text); background: var(--surface-2); }
+  .hint-close :global(svg) { width: 18px; height: 18px; }
+  @keyframes drop { from { opacity: 0; transform: translate(-50%, -8px); } }
+  .noscript { position: fixed; inset: auto 16px 16px; padding: 16px; border-radius: 12px; background: var(--surface); }
+</style>

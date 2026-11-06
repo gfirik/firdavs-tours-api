@@ -1,0 +1,489 @@
+---
+import { Picture, getImage } from 'astro:assets';
+import Base from '../layouts/Base.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import Icon from '../components/Icon.astro';
+import TileField from '../components/TileField.astro';
+import { SITE, STARTERS } from '../lib/site';
+import { tours, tourById, fromPrice, usd, nextDepartures, fmtDate, quote, tourStarter, planHref } from '../lib/catalogue';
+import { photo } from '../lib/photos';
+import { FAQ } from '../data/faq';
+
+// Featured routes and the photograph that carries each one.
+const FEATURED: [string, string][] = [
+  ['classic-8', 'registan-day'],
+  ['classic-group-8', 'khiva-kunya-ark'],
+  ['grand-15', 'bukhara-courtyard'],
+  ['fergana-crafts-5', 'kokand-palace'],
+  ['desert-yurt-3', 'yurt-camp'],
+  ['family-8', 'chimgan'],
+];
+const featured = FEATURED.map(([id, slug]) => ({ t: tourById(id), img: photo(slug) }));
+const featuredIds = new Set(FEATURED.map(([id]) => id));
+const more = tours.filter((t) => !featuredIds.has(t.id));
+
+const highlightsFor = (t: (typeof tours)[number], n: number) => t.highlights.slice(0, n);
+
+const DESTINATIONS = [
+  { name: 'Samarkand', line: 'Registan, Shakhi-Zinda, Gur-Emir', slug: 'registan-night' },
+  { name: 'Bukhara', line: 'Kalyan Minaret, the Ark, Lyabi-Khauz', slug: 'po-i-kalyan' },
+  { name: 'Khiva', line: 'Ichan-Kala, a walled city of minarets', slug: 'khiva-tosh-gate' },
+  { name: 'Tashkent', line: 'Chorsu Bazaar, Khast-Imam, the metro', slug: 'tashkent-metro' },
+  { name: 'Fergana Valley', line: 'Margilan silk, Rishtan ceramics, Kokand', slug: 'kokand-tower' },
+  { name: 'Nuratau & the desert', line: 'Village homestays, yurts by Lake Aydarkul', slug: 'nuratau-aydarkul' },
+  { name: 'Aral Sea', line: 'Muynak’s ship graveyard, Nukus museum', slug: 'moynaq-ship' },
+].map((d) => ({ ...d, img: photo(d.slug) }));
+
+// A real quote, computed by the same code the planner's price tool uses.
+const sample = quote('classic-8', 2, 'comfort');
+const group = tourById('classic-group-8');
+const groupNext = nextDepartures(group, new Date(), 1)[0];
+
+// Desktop-only arch photograph, loaded through a media query so phones never download it.
+const arch = photo('registan-night');
+const archAvif = await getImage({ src: arch.src, width: 900, format: 'avif', quality: 60 });
+const archWebp = await getImage({ src: arch.src, width: 900, format: 'webp', quality: 70 });
+const closing = photo('shah-i-zinda');
+
+const jsonLd = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'TravelAgency',
+    name: SITE.name,
+    url: SITE.url + '/',
+    logo: SITE.url + '/apple-touch-icon.png',
+    image: SITE.url + '/og.jpg',
+    description: SITE.description,
+    areaServed: { '@type': 'Country', name: 'Uzbekistan' },
+    availableLanguage: ['English', 'Russian', 'Uzbek'],
+    currenciesAccepted: 'USD',
+    priceRange: `${usd(Math.min(...tours.map(fromPrice)))}–${usd(Math.max(...tours.map((t) => fromPrice(t))))} per person`,
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: FAQ.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+  },
+];
+---
+<Base
+  title="Firdavs Tours · Plan your trip to Uzbekistan"
+  description={SITE.description}
+  path="/"
+  jsonLd={jsonLd}
+>
+  <style slot="head" set:html={`@media (min-width: 960px){.hero-arch{background-image:url(${archWebp.src});background-image:image-set(url(${archAvif.src}) type("image/avif"),url(${archWebp.src}) type("image/webp"))}}`} />
+  <Header />
+  <main id="main">
+    <!-- HERO: the conversation starts here -->
+    <section class="hero" aria-labelledby="hero-title">
+      <TileField class="hero-tiles" id="hero-tile" />
+      <div class="wrap hero-grid">
+        <div class="hero-copy">
+          <h1 id="hero-title">Plan Uzbekistan in one conversation</h1>
+          <p class="hero-sub">Tell us where and when. You’ll get a route and an exact price for your group in seconds, and a real consultant confirms within 24 hours.</p>
+
+          <div class="planner" data-planner>
+            <form class="ask" action="/plan" method="get" data-ask>
+              <label class="sr-only" for="ask-input">Where would you like to go, and when?</label>
+              <textarea id="ask-input" name="q" rows="1" autocomplete="off" enterkeyhint="send" maxlength="500"
+                placeholder="Where would you like to go, and when?" required data-ask-input></textarea>
+              <button class="send" type="submit" aria-label="Start planning">
+                <Icon name="arrow-up" />
+              </button>
+            </form>
+            <ul class="chips" aria-label="Or start with">
+              {STARTERS.map((s) => (
+                <li><a class="chip" href={planHref(s)}>{s}<Icon name="arrow" /></a></li>
+              ))}
+            </ul>
+          </div>
+          <p class="hero-langs">Plan in <span lang="en">English</span>, <span lang="ru">Русский</span> or <span lang="uz">Oʻzbekcha</span>.</p>
+        </div>
+        <div class="hero-arch" role="img" aria-label={arch.alt}></div>
+      </div>
+    </section>
+
+    <!-- TOURS -->
+    <section id="tours" class="section tours" aria-labelledby="tours-title">
+      <div class="wrap">
+        <div class="section-head">
+          <h2 id="tours-title">Journeys we run</h2>
+          <p class="lede">Every route runs privately all year, or join the small-group Silk Road Classic. Prices depend only on group size and hotel class; tap a journey to see yours.</p>
+        </div>
+        <ul class="tour-grid">
+          {featured.map(({ t, img }, i) => (
+            <li class:list={['tour', { 'tour-feature': i === 0 }]}>
+              <a href={planHref(tourStarter(t))} class="tour-link">
+                <div class="tour-media">
+                  <Picture src={img.src} alt={img.alt} formats={['avif', 'webp']}
+                    widths={i === 0 ? [480, 720, 960, 1280] : [400, 600, 800]}
+                    sizes={i === 0 ? '(min-width: 1000px) 780px, 100vw' : '(min-width: 1000px) 380px, (min-width: 640px) 50vw, 100vw'}
+                    loading="lazy" decoding="async" />
+                  <span class="tour-days num">{t.days} {t.days === 1 ? 'day' : 'days'}{t.type === 'group' ? ' · small group' : ' · private'}</span>
+                </div>
+                <div class="tour-body">
+                  <h3>{t.name}</h3>
+                  <p class="route">{t.cities.join(' · ')}</p>
+                  <ul class="hl">
+                    {highlightsFor(t, i === 0 ? 4 : 3).map((h) => <li>{h}</li>)}
+                    {t.type === 'group' && groupNext && <li>Next departure {fmtDate(groupNext)}, up to {t.max_group} travellers</li>}
+                  </ul>
+                  <p class="price">from <strong class="num">{usd(fromPrice(t))}</strong> per person</p>
+                  <span class="tour-go">Plan this journey <Icon name="arrow" /></span>
+                </div>
+              </a>
+            </li>
+          ))}
+        </ul>
+
+        <div class="more">
+          <h3>More journeys</h3>
+          <ul class="more-list">
+            {more.map((t) => (
+              <li>
+                <a href={planHref(tourStarter(t))}>
+                  <span class="m-name">{t.name}</span>
+                  <span class="m-days num">{t.days} {t.days === 1 ? 'day' : 'days'}</span>
+                  <span class="m-price num">from {usd(fromPrice(t))}</span>
+                  <Icon name="arrow" />
+                </a>
+              </li>
+            ))}
+          </ul>
+          <p class="fine">“From” is the lowest per-person rate: 5 or more travellers in Standard hotels on private journeys, or the Standard rate on the small-group tour. Prices are 2026 estimates in USD.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section id="how" class="section how" aria-labelledby="how-title">
+      <div class="wrap how-grid">
+        <div class="how-copy">
+          <div class="section-head">
+            <h2 id="how-title">How it works</h2>
+            <p class="lede">From a first question to a confirmed journey, without forms or waiting for a brochure.</p>
+          </div>
+          <ol class="steps">
+            <li>
+              <span class="step-n num" aria-hidden="true">1</span>
+              <div><h3>Tell us your trip</h3><p>Dates, who’s coming, what you love. Write it the way you’d say it, in English, Russian or Uzbek.</p></div>
+            </li>
+            <li>
+              <span class="step-n num" aria-hidden="true">2</span>
+              <div><h3>Get an instant price</h3><p>The planner suggests one or two routes and shows the exact price for your group size and hotel class, with what’s included.</p></div>
+            </li>
+            <li>
+              <span class="step-n num" aria-hidden="true">3</span>
+              <div><h3>A consultant confirms within 24 hours</h3><p>When you’re ready, your request goes to a travel consultant with a reference number. They check availability and reply within a day.</p></div>
+            </li>
+          </ol>
+        </div>
+        <figure class="convo" aria-label="Example conversation">
+          <div class="bubble you">Two of us in April, comfort hotels. We love old architecture.</div>
+          <div class="reply">
+            <p class="reply-lead">For a first visit I’d suggest the private Classic Silk Road.</p>
+            <div class="quote-card">
+              <p class="q-name">{sample.tour_name}</p>
+              <dl>
+                <div><dt>Length</dt><dd class="num">{sample.days} days</dd></div>
+                <div><dt>Travellers</dt><dd class="num">{sample.travellers}, Comfort hotels</dd></div>
+                <div><dt>Per person</dt><dd class="num">{usd(sample.per_person_usd)}</dd></div>
+                <div class="total"><dt>Total</dt><dd class="num">{usd(sample.total_usd)}</dd></div>
+              </dl>
+            </div>
+            <p class="reply-next">Would you like me to send this to a consultant?</p>
+          </div>
+          <figcaption>An example exchange. Prices are computed from the current price list.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- WHY -->
+    <section class="section why" aria-labelledby="why-title">
+      <div class="wrap">
+        <div class="section-head"><h2 id="why-title">Why Firdavs Tours</h2></div>
+        <ul class="why-list">
+          <li>
+            <h3>Private, or in a small group</h3>
+            <p>Every route runs privately for your own party. Or join the {group.name}: it runs with as few as 2 travellers and never takes more than {group.max_group}.</p>
+          </li>
+          <li>
+            <h3><span lang="en">English</span>, <span lang="ru">Русский</span>, <span lang="uz">Oʻzbekcha</span></h3>
+            <p>Plan in your own language, from the first question to the booking request.</p>
+          </li>
+          <li>
+            <h3>Prices you can see</h3>
+            <p>A price depends on two things: how many of you travel and which hotels you choose. You see it before you share any details, with inclusions and exclusions listed. Solo travellers pay a single supplement, shown upfront.</p>
+          </li>
+          <li>
+            <h3>Real people behind every booking</h3>
+            <p>A travel consultant reads every request and replies within 24 hours. Nothing is charged online; deposits are arranged with them directly.</p>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- DESTINATIONS -->
+    <section class="section dest" aria-labelledby="dest-title">
+      <div class="wrap"><div class="section-head">
+        <h2 id="dest-title">Where you can go</h2>
+        <p class="lede">From Timurid Samarkand to the dry bed of the Aral Sea. Pick a place to start a plan around it.</p>
+      </div></div>
+      <ul class="dest-strip" tabindex="0" aria-label="Destinations">
+        {DESTINATIONS.map((d) => (
+          <li>
+            <a href={planHref(`I'd love to see ${d.name}. Which journey would you suggest?`)}>
+              <Picture src={d.img.src} alt={d.img.alt} formats={['avif', 'webp']} widths={[320, 480, 640]} sizes="(min-width: 900px) 300px, 72vw" loading="lazy" decoding="async" />
+              <span class="dest-text"><strong>{d.name}</strong><span>{d.line}</span></span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <!-- FAQ -->
+    <section id="faq" class="section faq" aria-labelledby="faq-title">
+      <div class="wrap faq-grid">
+        <div class="section-head">
+          <h2 id="faq-title">Questions travellers ask</h2>
+          <p class="lede">Anything else, ask the planner. It answers in seconds, any time.</p>
+        </div>
+        <div class="faq-list">
+          {FAQ.map((f) => (
+            <details>
+              <summary><span>{f.q}</span><Icon name="plus" /></summary>
+              <p set:html={f.html ?? f.a} />
+            </details>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- CLOSING -->
+    <section class="closing" aria-labelledby="closing-title">
+      <Picture class="closing-img" src={closing.src} alt="" formats={['avif', 'webp']} widths={[640, 1024, 1600]} sizes="100vw" loading="lazy" decoding="async" />
+      <div class="wrap closing-inner">
+        <h2 id="closing-title">Your Uzbekistan starts with a question</h2>
+        <p>Ask anything, from a weekend in Samarkand to fifteen days from the mountains to the Aral Sea.</p>
+        <a class="btn btn-primary" href="/plan">Plan my trip <Icon name="arrow" /></a>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</Base>
+
+<script>
+  // Progressive enhancement only: the form and chips work as plain links without JS.
+  // Name the panel so the browser morphs it into the planner on /plan.
+  const panel = document.querySelector<HTMLElement>('[data-planner]');
+  const mark = () => panel && (panel.style.viewTransitionName = 'planner');
+  const form = document.querySelector<HTMLFormElement>('[data-ask]');
+  form?.addEventListener('submit', mark);
+  // Enter sends, Shift+Enter adds a line, like the planner's own composer.
+  document.querySelector<HTMLTextAreaElement>('[data-ask-input]')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); form?.requestSubmit(); }
+  });
+  document.querySelectorAll('a[href^="/plan"]').forEach((a) => a.addEventListener('click', mark));
+</script>
+
+<style>
+  /* ---------- Hero ---------- */
+  .hero { position: relative; isolation: isolate; overflow: hidden; border-bottom: 1px solid var(--line-soft); }
+  .hero :global(.hero-tiles) {
+    position: absolute; inset: 0; width: 100%; height: 100%; z-index: -1;
+    -webkit-mask-image: radial-gradient(ellipse at var(--mx, 30%) 58%, #000 0, #000 var(--r, 70%), transparent calc(var(--r, 70%) + 30%));
+            mask-image: radial-gradient(ellipse at var(--mx, 30%) 58%, #000 0, #000 var(--r, 70%), transparent calc(var(--r, 70%) + 30%));
+    animation: tiles-in 2.4s var(--ease) both;
+  }
+  .hero::after {
+    content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background: radial-gradient(ellipse 60% 50% at 28% 60%, color-mix(in oklab, var(--bg) 92%, transparent), transparent 75%);
+  }
+  @property --r { syntax: '<percentage>'; inherits: false; initial-value: 70%; }
+  @keyframes tiles-in { from { --r: 0%; opacity: 0.2; } to { --r: 70%; opacity: 1; } }
+
+  .hero-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 48px; padding-block: clamp(48px, 9vw, 112px) clamp(56px, 9vw, 120px); align-items: center; }
+  .hero-copy { display: grid; gap: 22px; max-width: 40rem; }
+  .hero h1 { font-size: clamp(2.9rem, 7.4vw, 5.6rem); line-height: 0.98; letter-spacing: -0.02em; font-weight: 600; }
+  .hero-sub { font-size: clamp(1.08rem, 1.6vw, 1.22rem); color: var(--muted); max-width: 34rem; }
+
+  .planner {
+    margin-top: 10px; padding: 14px; display: grid; gap: 14px;
+    background: color-mix(in oklab, var(--surface) 80%, transparent);
+    border: 1px solid var(--line); border-radius: 26px; box-shadow: var(--shadow);
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  }
+  .ask { position: relative; display: flex; align-items: center; }
+  .ask textarea {
+    width: 100%; min-height: 64px; padding: 19px 72px 19px 22px; border-radius: 18px; resize: none; line-height: 1.4;
+    field-sizing: content; max-height: 9em;
+    background: var(--bg); border: 1px solid var(--line); font-size: 1.14rem;
+    transition: border-color 0.25s, box-shadow 0.35s var(--ease);
+  }
+  .ask textarea::placeholder { color: var(--muted); opacity: 1; }
+  .ask textarea:focus-visible { outline: none; border-color: var(--turq); box-shadow: 0 0 0 4px rgb(60 198 192 / 0.22); }
+  .send {
+    position: absolute; right: 8px; bottom: 8px; width: 48px; height: 48px; border-radius: 14px; border: 0; cursor: pointer;
+    background: var(--turq); color: var(--on-turq); display: grid; place-items: center;
+    transition: transform 0.35s var(--ease), background-color 0.2s;
+  }
+  .send:hover { background: #55d3cd; transform: translateY(-1px); }
+  .send :global(svg) { width: 22px; height: 22px; }
+  .planner .chips { gap: 8px; }
+  .planner .chip { font-size: 0.95rem; min-height: 42px; background: transparent; }
+  @media (max-width: 520px) { .ask textarea { min-height: 84px; padding: 16px 68px 16px 18px; font-size: 1.06rem; } }
+  .hero-langs { color: var(--muted); font-size: 0.95rem; }
+
+  .hero-arch { display: none; }
+  @media (min-width: 960px) {
+    .hero-grid { grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr); }
+    .hero-arch {
+      display: block; justify-self: end; width: 100%; max-width: 420px; aspect-ratio: 3 / 4.4;
+      background-color: var(--surface); background-size: cover; background-position: 50% 60%;
+      border-radius: 999px 999px var(--radius-lg) var(--radius-lg);
+      border: 1px solid color-mix(in oklab, var(--gold) 45%, transparent);
+      box-shadow: var(--shadow), inset 0 0 0 8px color-mix(in oklab, var(--bg) 35%, transparent);
+    }
+  }
+
+  /* ---------- Tours ---------- */
+  .tour-grid { list-style: none; margin: 0; padding: 0; display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 640px) { .tour-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (min-width: 1000px) {
+    .tour-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .tour-feature { grid-column: span 2; grid-row: span 2; }
+    .tour-feature .tour-link { grid-template-rows: 1fr auto; }
+    .tour-feature .tour-media :global(picture), .tour-feature .tour-media :global(img) { height: 100%; }
+    .tour-feature .tour-media :global(img) { aspect-ratio: auto; min-height: 340px; }
+    .tour-feature .tour-body { padding: 28px 30px 30px; }
+    .tour-feature h3 { font-size: 2.3rem; }
+    .tour-feature .hl { grid-template-columns: 1fr 1fr; column-gap: 28px; }
+  }
+  .tour-link {
+    height: 100%; display: grid; grid-template-rows: auto 1fr; text-decoration: none;
+    background: var(--surface); border: 1px solid var(--line-soft); border-radius: var(--radius-lg); overflow: hidden;
+    transition: border-color 0.3s, transform 0.5s var(--ease), box-shadow 0.5s var(--ease);
+  }
+  .tour-link:hover { border-color: var(--line); transform: translateY(-3px); box-shadow: var(--shadow); }
+  .tour-media { position: relative; overflow: hidden; }
+  .tour-media :global(img) { width: 100%; aspect-ratio: 3 / 2; object-fit: cover; transition: transform 0.9s var(--ease); }
+  .tour-link:hover .tour-media :global(img) { transform: scale(1.04); }
+  .tour-days {
+    position: absolute; left: 14px; top: 14px; padding: 6px 12px; border-radius: 999px;
+    background: rgb(9 16 34 / 0.78); color: #f3ede0; font-size: 0.86rem; font-weight: 600; letter-spacing: 0.01em;
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  }
+  .tour-body { display: grid; gap: 12px; align-content: start; padding: 22px 22px 24px; }
+  .route { color: var(--turq-ink); font-size: 0.95rem; font-weight: 500; }
+  .hl { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; color: var(--muted); font-size: 0.96rem; }
+  .hl li { padding-left: 18px; position: relative; }
+  .hl li::before { content: ''; position: absolute; left: 2px; top: 0.62em; width: 6px; height: 6px; background: var(--gold); transform: rotate(45deg); border-radius: 1px; }
+  .price { margin-top: 4px; color: var(--muted); }
+  .price strong { font-family: var(--serif); font-size: 1.7rem; font-weight: 600; color: var(--text); letter-spacing: -0.01em; }
+  .tour-go { display: inline-flex; align-items: center; gap: 8px; color: var(--turq-ink); font-weight: 600; }
+  .tour-go :global(svg) { width: 17px; height: 17px; transition: transform 0.4s var(--ease); }
+  .tour-link:hover .tour-go :global(svg) { transform: translateX(4px); }
+
+  .more { margin-top: 56px; display: grid; gap: 16px; }
+  .more h3 { font-size: 1.75rem; }
+  .more-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); columns: 2 420px; column-gap: 40px; }
+  .more-list li { break-inside: avoid; border-bottom: 1px solid var(--line-soft); }
+  .more-list a {
+    display: grid; grid-template-columns: 1fr auto auto 18px; gap: 14px; align-items: baseline;
+    padding: 16px 4px; text-decoration: none; transition: color 0.2s;
+  }
+  .more-list a:hover .m-name { color: var(--turq-ink); }
+  .m-name { font-weight: 500; }
+  .m-days, .m-price { color: var(--muted); font-size: 0.93rem; white-space: nowrap; }
+  .more-list :global(svg) { width: 16px; height: 16px; align-self: center; color: var(--muted); }
+  .fine { color: var(--muted); font-size: 0.9rem; }
+  @media (max-width: 520px) {
+    .more-list a { grid-template-columns: 1fr auto; row-gap: 2px; }
+    .m-days { grid-row: 2; }
+    .m-price { grid-row: 2; justify-self: end; }
+    .more-list :global(svg) { display: none; }
+  }
+
+  /* ---------- How ---------- */
+  .how { background: var(--bg-deep); border-block: 1px solid var(--line-soft); }
+  .how-grid { display: grid; gap: 56px; align-items: center; }
+  @media (min-width: 960px) { .how-grid { grid-template-columns: 1fr 1fr; gap: 80px; } }
+  .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; position: relative; }
+  .steps li { display: grid; grid-template-columns: 52px 1fr; gap: 18px; padding-bottom: 32px; position: relative; }
+  .steps li:not(:last-child)::before { content: ''; position: absolute; left: 25px; top: 52px; bottom: 4px; width: 1px; background: linear-gradient(var(--gold), transparent); opacity: 0.6; }
+  .step-n {
+    width: 52px; height: 52px; display: grid; place-items: center; border-radius: 50%;
+    border: 1px solid color-mix(in oklab, var(--gold) 60%, transparent); color: var(--gold-ink);
+    font-family: var(--serif); font-size: 1.6rem; font-weight: 600;
+  }
+  .steps h3 { margin: 10px 0 6px; }
+  .steps p { color: var(--muted); }
+
+  .convo { margin: 0; display: grid; gap: 14px; padding: clamp(18px, 3vw, 28px); border-radius: var(--radius-lg); background: var(--bg); border: 1px solid var(--line); box-shadow: var(--shadow); }
+  .bubble.you { justify-self: end; max-width: 85%; padding: 12px 16px; border-radius: 18px 18px 4px 18px; background: var(--surface-2); border: 1px solid var(--line); }
+  .reply { display: grid; gap: 12px; max-width: 94%; }
+  .reply-lead { font-family: var(--serif); font-size: 1.35rem; font-weight: 600; line-height: 1.2; }
+  .quote-card { padding: 18px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--line); }
+  .q-name { font-weight: 600; margin-bottom: 10px; }
+  .quote-card dl { margin: 0; display: grid; gap: 6px; }
+  .quote-card dl div { display: flex; justify-content: space-between; gap: 16px; color: var(--muted); }
+  .quote-card dd { margin: 0; color: var(--text); }
+  .quote-card .total { margin-top: 6px; padding-top: 10px; border-top: 1px solid var(--line); }
+  .quote-card .total dt, .quote-card .total dd { color: var(--text); font-weight: 600; }
+  .quote-card .total dd { font-family: var(--serif); font-size: 1.5rem; line-height: 1; color: var(--gold-ink); }
+  .reply-next { color: var(--muted); }
+  .convo figcaption { color: var(--muted); font-size: 0.85rem; border-top: 1px dashed var(--line); padding-top: 12px; }
+
+  /* ---------- Why ---------- */
+  .why-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); border-top: 1px solid var(--line); }
+  @media (min-width: 760px) { .why-list { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 64px; } }
+  .why-list li { padding: 30px 0 34px; border-bottom: 1px solid var(--line-soft); display: grid; gap: 10px; align-content: start; }
+  .why-list h3 { font-size: clamp(1.7rem, 2.6vw, 2.1rem); }
+  .why-list p { color: var(--muted); max-width: 32rem; }
+
+  /* ---------- Destinations ---------- */
+  .dest { padding-bottom: clamp(56px, 8vw, 100px); }
+  .dest-strip {
+    list-style: none; margin: 0; display: grid; grid-auto-flow: column; grid-auto-columns: min(72vw, 300px); gap: 16px;
+    overflow-x: auto; scroll-snap-type: x mandatory; overscroll-behavior-x: contain;
+    padding: 4px max(var(--gutter), calc((100vw - var(--max)) / 2)) 20px;
+    scroll-padding-inline: max(var(--gutter), calc((100vw - var(--max)) / 2));
+  }
+  .dest-strip:focus-visible { outline-offset: -4px; }
+  .dest-strip li { scroll-snap-align: start; }
+  .dest-strip a { position: relative; display: block; border-radius: var(--radius-lg); overflow: hidden; text-decoration: none; color: #f3ede0; aspect-ratio: 3 / 4; background: var(--surface); }
+  .dest-strip :global(picture) { height: 100%; }
+  .dest-strip :global(img) { width: 100%; height: 100%; object-fit: cover; transition: transform 0.9s var(--ease); }
+  .dest-strip a:hover :global(img) { transform: scale(1.05); }
+  .dest-strip a::after { content: ''; position: absolute; inset: 0; background: var(--veil); }
+  .dest-text { position: absolute; z-index: 1; left: 18px; right: 18px; bottom: 18px; display: grid; gap: 4px; }
+  .dest-text strong { font-family: var(--serif); font-size: 1.75rem; font-weight: 600; line-height: 1.05; }
+  .dest-text span { font-size: 0.94rem; color: #e3dccd; }
+
+  /* ---------- FAQ ---------- */
+  .faq-grid { display: grid; gap: 24px; }
+  @media (min-width: 960px) { .faq-grid { grid-template-columns: 0.8fr 1.2fr; gap: 72px; } .faq-grid .section-head { position: sticky; top: 110px; align-self: start; } }
+  .faq-list { border-top: 1px solid var(--line); }
+  .faq-list details { border-bottom: 1px solid var(--line-soft); }
+  .faq-list summary {
+    list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 20px;
+    padding: 22px 2px; font-family: var(--serif); font-size: clamp(1.3rem, 2vw, 1.5rem); font-weight: 600; line-height: 1.2;
+  }
+  .faq-list summary::-webkit-details-marker { display: none; }
+  .faq-list summary :global(svg) { flex: none; width: 22px; height: 22px; color: var(--turq-ink); transition: transform 0.4s var(--ease); }
+  .faq-list details[open] summary :global(svg) { transform: rotate(45deg); }
+  .faq-list summary:hover span { color: var(--turq-ink); }
+  .faq-list details p { padding: 0 2px 24px; color: var(--muted); max-width: 40rem; }
+  .faq-list details p :global(a) { color: var(--turq-ink); }
+
+  /* ---------- Closing ---------- */
+  .closing { position: relative; isolation: isolate; overflow: hidden; color: #f3ede0; }
+  .closing :global(picture) { position: absolute; inset: 0; z-index: -2; }
+  .closing :global(picture img) { width: 100%; height: 100%; object-fit: cover; }
+  .closing::before { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, rgb(9 16 34 / 0.95) 0%, rgb(13 22 43 / 0.82) 50%, rgb(13 22 43 / 0.45) 100%); }
+  .closing-inner { padding-block: clamp(88px, 14vw, 168px); display: grid; gap: 20px; justify-items: start; }
+  .closing h2 { max-width: 14ch; font-size: clamp(2.4rem, 5.4vw, 4.2rem); }
+  .closing p { max-width: 32rem; color: #d9d3c6; font-size: 1.1rem; }
+</style>
