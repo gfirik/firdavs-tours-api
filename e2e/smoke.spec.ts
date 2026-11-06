@@ -36,6 +36,30 @@ test.describe('landing page', () => {
   });
 });
 
+test.describe('content rules', () => {
+  test('languages are listed English, Uzbek, Russian', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.locator('.hero-langs')).toHaveText('Plan in English, Oʻzbekcha or Русский.');
+    await expect(page.locator('.why-list h3').nth(1)).toHaveText('English, Oʻzbekcha, Русский');
+    await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /English, Uzbek or Russian/);
+    const body = await page.locator('body').innerText();
+    expect(body).not.toMatch(/Russian(,| or| and) Uzbek|Русский(,| or) Oʻzbekcha/);
+  });
+
+  test('every photo on the landing page is credited', async ({ page }) => {
+    await page.goto('/credits');
+    const credited = await page.locator('.credits .t a').evaluateAll((as) => as.map((a) => (a as HTMLAnchorElement).href));
+    const credits = (await import('../src/data/photo-credits.json', { with: { type: 'json' } })).default as { slug: string; source: string }[];
+    expect(credited).toHaveLength(credits.length);
+    await page.goto('/');
+    const html = await page.content();
+    const used = [...new Set([...html.matchAll(/\/_astro\/([a-z0-9-]+)\.[A-Za-z0-9_-]+\.(?:avif|webp|jpg)/g)].map((m) => m[1]))];
+    expect(used.length).toBeGreaterThan(10);
+    for (const slug of used) expect(credits.map((c) => c.slug), `${slug} has a credit`).toContain(slug);
+    expect(html).toContain('kalon-minaret-night');
+  });
+});
+
 test.describe('handoff to the planner', () => {
   test('hero submit opens /plan and delivers the question', async ({ page }) => {
     await stubPlanner(page);

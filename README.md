@@ -1,6 +1,6 @@
 # Firdavs Tours
 
-**Plan Uzbekistan in one conversation.** Firdavs Tours is a travel site for private and small-group journeys across Uzbekistan. Travellers describe their trip in English, Russian or Uzbek, get a route and an exact price for their group in seconds, and a human consultant confirms within 24 hours.
+**Plan Uzbekistan in one conversation.** Firdavs Tours is a travel site for private and small-group journeys across Uzbekistan. Travellers describe their trip in English, Uzbek or Russian, get a route and an exact price for their group in seconds, and a human consultant confirms within 24 hours.
 
 **Live:** https://tours.fhsystems.dev
 

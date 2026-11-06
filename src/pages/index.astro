@@ -12,12 +12,12 @@ import { FAQ } from '../data/faq';
 
 // Featured routes and the photograph that carries each one.
 const FEATURED: [string, string][] = [
-  ['classic-8', 'registan-day'],
-  ['classic-group-8', 'khiva-kunya-ark'],
-  ['grand-15', 'bukhara-courtyard'],
-  ['fergana-crafts-5', 'kokand-palace'],
-  ['desert-yurt-3', 'yurt-camp'],
-  ['family-8', 'chimgan'],
+  ['classic-8', 'registan-night'],
+  ['classic-group-8', 'khiva-aminkhan-night'],
+  ['grand-15', 'bukhara-ark-sunset'],
+  ['fergana-crafts-5', 'rishtan-plate'],
+  ['desert-yurt-3', 'yurts-night'],
+  ['family-8', 'charvak-road'],
 ];
 const featured = FEATURED.map(([id, slug]) => ({ t: tourById(id), img: photo(slug) }));
 const featuredIds = new Set(FEATURED.map(([id]) => id));
@@ -26,13 +26,13 @@ const more = tours.filter((t) => !featuredIds.has(t.id));
 const highlightsFor = (t: (typeof tours)[number], n: number) => t.highlights.slice(0, n);
 
 const DESTINATIONS = [
-  { name: 'Samarkand', line: 'Registan, Shakhi-Zinda, Gur-Emir', slug: 'registan-night' },
-  { name: 'Bukhara', line: 'Kalyan Minaret, the Ark, Lyabi-Khauz', slug: 'po-i-kalyan' },
-  { name: 'Khiva', line: 'Ichan-Kala, a walled city of minarets', slug: 'khiva-tosh-gate' },
-  { name: 'Tashkent', line: 'Chorsu Bazaar, Khast-Imam, the metro', slug: 'tashkent-metro' },
-  { name: 'Fergana Valley', line: 'Margilan silk, Rishtan ceramics, Kokand', slug: 'kokand-tower' },
-  { name: 'Nuratau & the desert', line: 'Village homestays, yurts by Lake Aydarkul', slug: 'nuratau-aydarkul' },
-  { name: 'Aral Sea', line: 'Muynak’s ship graveyard, Nukus museum', slug: 'moynaq-ship' },
+  { name: 'Samarkand', line: 'Registan, Shakhi-Zinda, Gur-Emir', slug: 'shah-i-zinda' },
+  { name: 'Bukhara', line: 'Kalyan Minaret, the Ark, Lyabi-Khauz', slug: 'bukhara-mir-i-arab-sunset' },
+  { name: 'Khiva', line: 'Ichan-Kala, a walled city of minarets', slug: 'khiva-kalta-minor-night' },
+  { name: 'Tashkent', line: 'Khast-Imam, Chorsu Bazaar, the metro', slug: 'tashkent-hazrati-imam' },
+  { name: 'Fergana Valley', line: 'Margilan silk, Rishtan ceramics, Kokand', slug: 'kokand-palace' },
+  { name: 'Nuratau & the desert', line: 'Village homestays, yurts by Lake Aydarkul', slug: 'aydarkul-sunset' },
+  { name: 'Aral Sea', line: 'Muynak’s ship graveyard, Nukus museum', slug: 'moynaq-hull' },
 ].map((d) => ({ ...d, img: photo(d.slug) }));
 
 // A real quote, computed by the same code the planner's price tool uses.
@@ -41,10 +41,10 @@ const group = tourById('classic-group-8');
 const groupNext = nextDepartures(group, new Date(), 1)[0];
 
 // Desktop-only arch photograph, loaded through a media query so phones never download it.
-const arch = photo('registan-night');
+const arch = photo('kalon-minaret-night');
 const archAvif = await getImage({ src: arch.src, width: 900, format: 'avif', quality: 60 });
 const archWebp = await getImage({ src: arch.src, width: 900, format: 'webp', quality: 70 });
-const closing = photo('shah-i-zinda');
+const closing = photo('registan-evening');
 
 const jsonLd = [
   {
@@ -56,7 +56,7 @@ const jsonLd = [
     image: SITE.url + '/og.jpg',
     description: SITE.description,
     areaServed: { '@type': 'Country', name: 'Uzbekistan' },
-    availableLanguage: ['English', 'Russian', 'Uzbek'],
+    availableLanguage: ['English', 'Uzbek', 'Russian'],
     currenciesAccepted: 'USD',
     priceRange: `${usd(Math.min(...tours.map(fromPrice)))}–${usd(Math.max(...tours.map((t) => fromPrice(t))))} per person`,
   },
@@ -99,7 +99,7 @@ const jsonLd = [
               ))}
             </ul>
           </div>
-          <p class="hero-langs">Plan in <span lang="en">English</span>, <span lang="ru">Русский</span> or <span lang="uz">Oʻzbekcha</span>.</p>
+          <p class="hero-langs">Plan in <span lang="en">English</span>, <span lang="uz">Oʻzbekcha</span> or <span lang="ru">Русский</span>.</p>
         </div>
         <div class="hero-arch" role="img" aria-label={arch.alt}></div>
       </div>
@@ -168,7 +168,7 @@ const jsonLd = [
           <ol class="steps">
             <li>
               <span class="step-n num" aria-hidden="true">1</span>
-              <div><h3>Tell us your trip</h3><p>Dates, who’s coming, what you love. Write it the way you’d say it, in English, Russian or Uzbek.</p></div>
+              <div><h3>Tell us your trip</h3><p>Dates, who’s coming, what you love. Write it the way you’d say it, in English, Uzbek or Russian.</p></div>
             </li>
             <li>
               <span class="step-n num" aria-hidden="true">2</span>
@@ -210,7 +210,7 @@ const jsonLd = [
             <p>Every route runs privately for your own party. Or join the {group.name}: it runs with as few as 2 travellers and never takes more than {group.max_group}.</p>
           </li>
           <li>
-            <h3><span lang="en">English</span>, <span lang="ru">Русский</span>, <span lang="uz">Oʻzbekcha</span></h3>
+            <h3><span lang="en">English</span>, <span lang="uz">Oʻzbekcha</span>, <span lang="ru">Русский</span></h3>
             <p>Plan in your own language, from the first question to the booking request.</p>
           </li>
           <li>
@@ -341,7 +341,7 @@ const jsonLd = [
     .hero-grid { grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr); }
     .hero-arch {
       display: block; justify-self: end; width: 100%; max-width: 420px; aspect-ratio: 3 / 4.4;
-      background-color: var(--surface); background-size: cover; background-position: 50% 60%;
+      background-color: var(--surface); background-size: cover; background-position: 50% 30%;
       border-radius: 999px 999px var(--radius-lg) var(--radius-lg);
       border: 1px solid color-mix(in oklab, var(--gold) 45%, transparent);
       box-shadow: var(--shadow), inset 0 0 0 8px color-mix(in oklab, var(--bg) 35%, transparent);
@@ -356,7 +356,7 @@ const jsonLd = [
     .tour-feature { grid-column: span 2; grid-row: span 2; }
     .tour-feature .tour-link { grid-template-rows: 1fr auto; }
     .tour-feature .tour-media :global(picture), .tour-feature .tour-media :global(img) { height: 100%; }
-    .tour-feature .tour-media :global(img) { aspect-ratio: auto; min-height: 340px; }
+    .tour-feature .tour-media :global(img) { aspect-ratio: auto; min-height: 340px; object-position: 50% 62%; }
     .tour-feature .tour-body { padding: 28px 30px 30px; }
     .tour-feature h3 { font-size: 2.3rem; }
     .tour-feature .hl { grid-template-columns: 1fr 1fr; column-gap: 28px; }
