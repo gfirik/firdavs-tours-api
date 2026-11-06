@@ -4,20 +4,21 @@ import credits from '../data/photo-credits.json';
 const files = import.meta.glob<{ default: ImageMetadata }>('../assets/photos/*.jpg', { eager: true });
 
 const ALT: Record<string, string> = {
+  'kalon-minaret-night': 'The Kalon Minaret in Bukhara, floodlit gold against the night sky',
   'registan-night': 'The three madrasas of the Registan in Samarkand, lit gold against a deep blue evening sky',
-  'registan-day': 'Registan square in Samarkand by day, with tiled portals and turquoise domes',
+  'registan-evening': 'Registan square in Samarkand at dusk, its madrasa portals lit against a blue sky',
   'shah-i-zinda': 'Turquoise-tiled portals of the Shakhi-Zinda necropolis in Samarkand',
-  'po-i-kalyan': 'The Kalyan Minaret and mosque courtyard in Bukhara under summer clouds',
-  'bukhara-courtyard': 'Arcaded courtyard of the Kalyan Mosque in Bukhara with the minaret beyond',
-  'khiva-kunya-ark': 'Tiled towers of the Kunya-Ark citadel inside the walls of Ichan-Kala, Khiva',
-  'khiva-tosh-gate': 'Mud-brick towers of the Tosh Gate in the walls of Khiva',
-  'tashkent-metro': 'Marble columns and chandeliers in a Tashkent metro station',
+  'khiva-kalta-minor-night': 'The tiled Kalta Minor minaret in Khiva, lit at night',
+  'khiva-aminkhan-night': 'The Muhammad Amin Khan madrasa and Kalta Minor in Khiva, illuminated at night',
+  'bukhara-ark-sunset': 'Bukhara old city at sunset, with the Kalon Minaret and turquoise domes beyond the Ark walls',
+  'bukhara-mir-i-arab-sunset': 'Tiled portal and dome of the Mir-i-Arab madrasa in Bukhara in warm sunset light',
+  'tashkent-hazrati-imam': 'Turquoise dome and minaret of the Hazrati Imam complex in Tashkent under a deep blue sky',
   'kokand-palace': 'Tiled entrance portal of the Khudayar Khan palace in Kokand',
-  'kokand-tower': 'A tiled corner tower of the Khudayar Khan palace in Kokand',
-  'yurt-camp': 'A yurt camp among the dunes of the Kyzylkum desert',
-  'nuratau-aydarkul': 'Spring flowers on the Nuratau foothills with Lake Aydarkul on the horizon',
-  'moynaq-ship': 'A rusting fishing boat stranded on the dry former seabed of the Aral Sea at Muynak',
-  chimgan: 'Greater Chimgan mountain above green slopes near Tashkent',
+  'rishtan-plate': 'A hand-painted blue Rishtan ceramic plate from the Fergana Valley',
+  'yurts-night': 'Three yurts under a moonlit sky in the Kyzylkum desert',
+  'aydarkul-sunset': 'Sunset over the shore of Lake Aydarkul',
+  'moynaq-hull': 'A rusted ship hull stranded on the sand of the former Aral Sea at Muynak',
+  'charvak-road': 'A mountain road above Charvak reservoir at golden hour, near Chimgan',
 };
 
 export type PhotoSlug = keyof typeof ALT;
