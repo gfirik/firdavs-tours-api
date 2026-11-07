@@ -6,11 +6,11 @@
 
 | Landing | Planner |
 |---|---|
-| ![Landing page, desktop](docs/screenshots/home-desktop.png) | ![Planner, desktop](docs/screenshots/plan-desktop.png) |
+| ![Landing page, desktop](docs/screenshots/home-desktop.jpg) | ![Planner, desktop](docs/screenshots/plan-desktop.jpg) |
 
 | Landing at 360px | Planner at 360px | Light theme |
 |---|---|---|
-| <img src="docs/screenshots/home-mobile-360.png" width="240" alt="Landing page at 360px"> | <img src="docs/screenshots/plan-mobile-360.png" width="240" alt="Planner at 360px"> | ![Landing page, light theme](docs/screenshots/home-light-desktop.png) |
+| <img src="docs/screenshots/home-mobile-360.jpg" width="240" alt="Landing page at 360px"> | <img src="docs/screenshots/plan-mobile-360.jpg" width="240" alt="Planner at 360px"> | ![Landing page, light theme](docs/screenshots/home-light-desktop.jpg) |
 
 ## What's here
 
