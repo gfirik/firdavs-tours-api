@@ -41,3 +41,8 @@ test('telegram: a failing API never throws', async () => {
   globalThis.fetch = async () => { throw new Error('network down'); };
   assert.equal(await notifyTeam(row), false);
 });
+
+test('telegram: enquiries carry the trip text and contact', () => {
+  const text = formatAlert({ id: 'FT-ENQ1', kind: 'enquiry', name: 'Ann', contact: '@ann_travel', message: 'Two of us in May', tour_id: null });
+  for (const s of ['New enquiry FT-ENQ1', 'planner was unavailable', 'Trip: Two of us in May', 'Contact: Ann, @ann_travel']) assert.ok(text.includes(s), s);
+});

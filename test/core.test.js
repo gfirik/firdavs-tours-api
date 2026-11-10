@@ -17,3 +17,12 @@ test('request validation', () => {
   assert.equal(ok.ok, true); assert.equal(ok.record.hotel_class, 'comfort');
   assert.equal(validateRequest({ name: 'Ann', contact: '@ann_travel', tour_id: 'classic-8', travellers: 2, hotel_class: 'standard', dates: 'May' }).ok, true);
 });
+test('enquiry validation: name, contact and a trip message are enough', () => {
+  const ok = validateRequest({ kind: 'enquiry', name: 'Ann', contact: '@ann_travel', message: 'Two of us in May, mountains and Samarkand' });
+  assert.equal(ok.ok, true);
+  assert.equal(ok.record.kind, 'enquiry');
+  assert.equal(ok.record.tour_id, null);
+  const bad = validateRequest({ kind: 'enquiry', name: 'A', contact: 'nope', message: 'hi' });
+  assert.deepEqual(bad.missing_or_invalid, ['name', 'contact', 'message']);
+  assert.equal(validateRequest({ name: 'Ann', contact: 'ann@example.com', tour_id: 'classic-8', travellers: 2, hotel_class: 'comfort', dates: 'May' }).record.kind, 'booking');
+});

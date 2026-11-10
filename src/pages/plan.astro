@@ -2,6 +2,7 @@
 import Base from '../layouts/Base.astro';
 import Mark from '../components/Mark.astro';
 import Icon from '../components/Icon.astro';
+import TileField from '../components/TileField.astro';
 import { PLANNER_ORIGIN } from '../lib/site';
 ---
 <Base
@@ -10,30 +11,46 @@ import { PLANNER_ORIGIN } from '../lib/site';
   path="/plan"
   bodyClass="plan"
 >
-  <script slot="head" is:inline define:vars={{ ORIGIN: PLANNER_ORIGIN }}>
-    // Hand the traveller's first question to the planner.
-    // The planner announces itself to its parent with "SYN"; we answer "ACK" with a
-    // MessagePort and send the question as an `agent.message.send` notification,
-    // which the planner acknowledges by id. If that does not happen in time,
-    // fall back to the clipboard hint. See docs/AGENT_HANDOFF.md.
+  <script slot="head" is:inline define:vars={{ ORIGIN: PLANNER_ORIGIN, WAIT_MS: 10000 }}>
+    // The planner announces itself to its parent with "SYN" once its app has booted. That is
+    // the readiness signal: an error page (502, offline) never sends it. We answer "ACK" with a
+    // MessagePort and, when there is a question, send it as `agent.message.send`, which the planner
+    // acknowledges by id. No SYN within WAIT_MS -> the planner counts as unavailable and the page
+    // shows the enquiry form. See docs/AGENT_HANDOFF.md.
     (function () {
       var params = new URLSearchParams(location.search);
       var q = (params.get('q') || '').trim().slice(0, 500);
       if (params.has('q')) history.replaceState(null, '', '/plan' + location.hash);
       window.__handoff = { q: q, state: q ? 'waiting' : 'none' };
-      if (!q) return;
+      window.__planner = { state: 'loading' };
+      var emit = function (name, detail) { document.dispatchEvent(new CustomEvent(name, { detail: detail })); };
 
-      var sent = false, pendingId = null, ackTimer = null;
-      var fail = function () {
-        if (window.__handoff.state === 'delivered') return;
+      var sent = false, pendingId = null, ackTimer = null, waitTimer = null;
+      var failHandoff = function (reason) {
+        if (window.__handoff.state !== 'waiting') return;
         window.__handoff.state = 'failed';
-        document.dispatchEvent(new CustomEvent('handoff:failed'));
+        emit('handoff:failed', { reason: reason });
       };
-      var synTimer = setTimeout(fail, 25000);
+      var unavailable = function () {
+        if (window.__planner.state !== 'loading') return;
+        window.__planner.state = 'unavailable';
+        emit('planner:unavailable');
+        failHandoff('unavailable');
+      };
+      window.__plannerWait = function () {
+        clearTimeout(waitTimer);
+        waitTimer = setTimeout(unavailable, WAIT_MS);
+      };
+      window.__plannerWait();
 
       window.addEventListener('message', function (e) {
         var frame = document.getElementById('planner');
         if (e.origin !== ORIGIN || !frame || e.source !== frame.contentWindow || e.data !== 'SYN') return;
+        clearTimeout(waitTimer);
+        var was = window.__planner.state;
+        window.__planner.state = 'ready';
+        emit(was === 'unavailable' ? 'planner:back' : 'planner:ready');
+
         var ch = new MessageChannel(), port = ch.port1;
         port.onmessage = function (m) {
           var d = m.data || {};
@@ -42,17 +59,17 @@ import { PLANNER_ORIGIN } from '../lib/site';
           else if (d.type === 'ACK' && d.id === pendingId) {
             clearTimeout(ackTimer);
             window.__handoff.state = 'delivered';
-            document.dispatchEvent(new CustomEvent('handoff:delivered'));
+            emit('handoff:delivered');
           }
         };
         port.start();
         frame.contentWindow.postMessage('ACK', ORIGIN, [ch.port2]);
-        if (sent) return;
+        if (!q || sent || window.__handoff.state === 'delivered') return;
         sent = true;
-        clearTimeout(synTimer);
+        if (window.__handoff.state === 'failed') window.__handoff.state = 'waiting'; // planner came back
         pendingId = (crypto.randomUUID && crypto.randomUUID()) || String(Date.now()) + Math.random();
         port.postMessage({ id: pendingId, type: 'NOTIFY', payload: { type: 'agent.message.send', message: q } });
-        ackTimer = setTimeout(fail, 5000);
+        ackTimer = setTimeout(function () { failHandoff('no_ack'); }, 5000);
       });
     })();
   </script>
@@ -63,13 +80,60 @@ import { PLANNER_ORIGIN } from '../lib/site';
       <p class="loading-text">Opening your planner…</p>
       <p class="loading-q" data-loading-q></p>
     </div>
-    <h1 class="sr-only">Plan your trip with Firdavs Tours</h1>
+    <h1 class="sr-only" data-plan-title>Plan your trip with Firdavs Tours</h1>
     <iframe
       id="planner"
       src={PLANNER_ORIGIN}
       title="Firdavs Tours trip planner"
       allow="microphone; clipboard-write"
     ></iframe>
+
+    <section class="down" hidden data-down aria-labelledby="down-title">
+      <TileField class="down-tiles" id="down-tile" />
+      <div class="down-inner">
+        <Mark size={48} />
+        <h2 id="down-title" tabindex="-1">The planner is taking a break.</h2>
+        <p class="down-lede">Leave your trip details and a consultant replies within 24 hours.</p>
+
+        <p class="back" role="status" hidden data-back>
+          The planner is back. <button type="button" class="link-btn" data-open-planner>Open the planner <Icon name="arrow" /></button>
+        </p>
+
+        <form class="enquiry" novalidate data-enquiry>
+          <div class="field">
+            <label for="fb-name">Your name</label>
+            <input id="fb-name" name="name" autocomplete="name" required minlength="2" maxlength="100" />
+          </div>
+          <div class="field">
+            <label for="fb-contact">Email or Telegram</label>
+            <input id="fb-contact" name="contact" autocomplete="email" inputmode="email" required maxlength="100" placeholder="you@example.com or @username" aria-describedby="fb-contact-help" />
+            <p class="help" id="fb-contact-help">We reply here, nowhere else.</p>
+          </div>
+          <div class="field">
+            <label for="fb-trip">Your trip</label>
+            <textarea id="fb-trip" name="message" rows="4" required minlength="5" maxlength="1000" placeholder="Where would you like to go, when, and who’s coming?"></textarea>
+          </div>
+          <div class="hp" aria-hidden="true">
+            <label for="fb-website">Website</label>
+            <input id="fb-website" name="website" tabindex="-1" autocomplete="off" />
+          </div>
+          <p class="form-error" role="alert" hidden data-form-error></p>
+          <button class="btn btn-primary send-btn" type="submit" data-send>Send to a consultant <Icon name="arrow" /></button>
+        </form>
+
+        <div class="sent" role="status" hidden data-sent>
+          <h3>Thank you<span data-sent-name></span>.</h3>
+          <p>Your reference is <strong class="ref num" data-sent-ref></strong>. A consultant replies within 24 hours.</p>
+        </div>
+
+        <nav class="down-links" aria-label="Meanwhile">
+          <a href="/#tours">Browse our journeys <Icon name="arrow" /></a>
+          <a href="/#faq">Questions travellers ask <Icon name="arrow" /></a>
+          <button type="button" class="link-btn" data-retry>Try the planner again</button>
+        </nav>
+      </div>
+    </section>
+
     <a class="home" href="/" aria-label="Back to Firdavs Tours home" aria-describedby="home-tip"><Icon name="home" /><span class="tip" id="home-tip" role="tooltip">Back to home</span></a>
     <a class="demo-chip" href="/about" data-agency="plan_chip">Demo by fhsystems</a>
 
@@ -83,25 +147,68 @@ import { PLANNER_ORIGIN } from '../lib/site';
 </Base>
 
 <script>
-  const h = (window as any).__handoff as { q: string; state: string };
+  type Handoff = { q: string; state: string };
+  const w = window as any;
+  const h = w.__handoff as Handoff;
+  const planner = w.__planner as { state: string };
   const frame = document.getElementById('planner') as HTMLIFrameElement;
   const loading = document.querySelector<HTMLElement>('[data-loading]')!;
   const hint = document.querySelector<HTMLElement>('[data-hint]')!;
   const hintText = document.querySelector<HTMLElement>('[data-hint-text]')!;
   const copyBtn = document.querySelector<HTMLButtonElement>('[data-hint-copy]')!;
+  const down = document.querySelector<HTMLElement>('[data-down]')!;
+  const form = document.querySelector<HTMLFormElement>('[data-enquiry]')!;
+  const trip = form.querySelector<HTMLTextAreaElement>('#fb-trip')!;
+  const back = document.querySelector<HTMLElement>('[data-back]')!;
 
   if (h?.q) {
     document.querySelector('[data-loading-q]')!.textContent = `“${h.q}”`;
     loading.style.viewTransitionName = 'planner';
+    trip.value = h.q;
   }
 
-  // Reveal the planner once its page has painted its own (matching) background.
-  frame.addEventListener('load', () => setTimeout(() => document.body.classList.add('ready'), 350));
+  // ---------- Planner ready / unavailable ----------
+  const reveal = () => {
+    down.hidden = true;
+    document.body.classList.remove('is-down');
+    setTimeout(() => document.body.classList.add('ready'), 350);
+  };
+  let touched = false;
+  let sentOk = false;
+  form.addEventListener('input', () => { touched = true; }, { once: true });
 
+  const showDown = () => {
+    hint.hidden = true;
+    document.body.classList.add('is-down');
+    down.hidden = false;
+    back.hidden = true;
+    document.getElementById('down-title')?.focus({ preventScroll: true });
+  };
+
+  if (planner.state === 'ready') reveal();
+  else if (planner.state === 'unavailable') showDown();
+  document.addEventListener('planner:ready', reveal);
+  document.addEventListener('planner:unavailable', showDown);
+  // Came back late: switch over unless the visitor has started on the form.
+  document.addEventListener('planner:back', () => {
+    if (!touched && !sentOk) reveal();
+    else back.hidden = false;
+  });
+  document.querySelector('[data-open-planner]')!.addEventListener('click', reveal);
+  document.querySelector('[data-retry]')!.addEventListener('click', () => {
+    document.body.classList.remove('is-down', 'ready');
+    down.hidden = true;
+    planner.state = 'loading';
+    w.__plannerWait();
+    frame.src = frame.src;
+  });
+
+  // ---------- Clipboard hint: the planner loaded but never confirmed the question ----------
   const copy = async () => {
     try { await navigator.clipboard.writeText(h.q); return true; } catch { return false; }
   };
-  const showHint = async () => {
+  const showHint = async (e?: Event) => {
+    if ((e as CustomEvent | undefined)?.detail?.reason === 'unavailable' || planner.state === 'unavailable') return;
     if (await copy()) {
       copyBtn.hidden = true;
     } else {
@@ -119,6 +226,77 @@ import { PLANNER_ORIGIN } from '../lib/site';
     }
   });
   document.querySelector('[data-hint-close]')!.addEventListener('click', () => { hint.hidden = true; });
+
+  // ---------- Enquiry form -> POST /api/requests ----------
+  const errorEl = document.querySelector<HTMLElement>('[data-form-error]')!;
+  const sendBtn = document.querySelector<HTMLButtonElement>('[data-send]')!;
+  const FIELD_MSG: Record<string, string> = {
+    name: 'Please add your name.',
+    contact: 'Please add an email address or a Telegram @username.',
+    message: 'Please tell us a little about your trip.',
+  };
+  let idemKey = '';
+  const fail = (msg: string, field?: string) => {
+    errorEl.textContent = msg;
+    errorEl.hidden = false;
+    form.querySelectorAll('[aria-invalid]').forEach((el) => el.removeAttribute('aria-invalid'));
+    if (field) {
+      const el = form.querySelector<HTMLElement>(`[name="${field}"]`);
+      el?.setAttribute('aria-invalid', 'true');
+      el?.focus();
+    }
+  };
+  form.addEventListener('input', () => { idemKey = ''; });
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorEl.hidden = true;
+    const data = new FormData(form);
+    const body = {
+      kind: 'enquiry',
+      name: String(data.get('name') || '').trim(),
+      contact: String(data.get('contact') || '').trim(),
+      message: String(data.get('message') || '').trim(),
+      website: String(data.get('website') || ''),
+      language: (navigator.language || '').slice(0, 10),
+      source: 'plan_fallback',
+    };
+    if (body.name.length < 2) return fail(FIELD_MSG.name, 'name');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$|^@?[A-Za-z0-9_]{5,32}$/.test(body.contact)) return fail(FIELD_MSG.contact, 'contact');
+    if (body.message.length < 5) return fail(FIELD_MSG.message, 'message');
+
+    // The same key on a retry means the server returns the same reference instead of a duplicate.
+    idemKey ||= (crypto.randomUUID && crypto.randomUUID()) || String(Date.now()) + Math.random();
+    sendBtn.disabled = true;
+    sendBtn.dataset.busy = '';
+    try {
+      const r = await fetch('/api/requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': idemKey },
+        body: JSON.stringify(body),
+      });
+      const json = await r.json().catch(() => ({}));
+      if (r.ok && json.request_id) {
+        sentOk = true;
+        form.hidden = true;
+        document.querySelector('[data-sent-name]')!.textContent = `, ${body.name.split(/\s+/)[0]}`;
+        document.querySelector('[data-sent-ref]')!.textContent = json.request_id;
+        const sent = document.querySelector<HTMLElement>('[data-sent]')!;
+        sent.hidden = false;
+        return;
+      }
+      if (r.status === 422) {
+        const field = (json.missing_or_invalid || [])[0];
+        return fail(FIELD_MSG[field] ?? 'Please check the form and try again.', field);
+      }
+      if (r.status === 429) return fail('Too many requests from this connection. Please try again in 10 minutes.');
+      fail('We couldn’t send your request. Please try again in a moment.');
+    } catch {
+      fail('We couldn’t send your request. Check your connection and try again.');
+    } finally {
+      sendBtn.disabled = false;
+      delete sendBtn.dataset.busy;
+    }
+  });
 </script>
 
 <style>
@@ -129,18 +307,71 @@ import { PLANNER_ORIGIN } from '../lib/site';
   #planner {
     position: absolute; inset: 0; width: 100%; height: 100%; height: 100dvh;
     border: 0; display: block; background: transparent; color-scheme: normal;
-    opacity: 0; transition: opacity 0.5s var(--ease);
+    opacity: 0; visibility: hidden; transition: opacity 0.5s var(--ease), visibility 0s linear 0.5s;
   }
-  :global(body.ready) #planner { opacity: 1; }
+  :global(body.ready) #planner { opacity: 1; visibility: visible; transition: opacity 0.5s var(--ease), visibility 0s; }
+  :global(body.is-down) #planner { visibility: hidden; }
   .loading {
     position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 14px;
     padding: 24px; text-align: center; transition: opacity 0.4s;
   }
-  :global(body.ready) .loading { opacity: 0; }
+  :global(body.ready) .loading, :global(body.is-down) .loading { opacity: 0; pointer-events: none; }
   .loading :global(.loading-mark) { animation: breathe 2.2s var(--ease) infinite alternate; }
   @keyframes breathe { from { transform: scale(0.94); opacity: 0.7; } to { transform: scale(1); opacity: 1; } }
   .loading-text { color: var(--muted); }
   .loading-q { font-family: var(--serif); font-size: clamp(1.4rem, 4vw, 2rem); font-weight: 600; max-width: 28ch; text-wrap: balance; }
+
+  /* ---------- Planner unavailable ---------- */
+  .down {
+    position: absolute; inset: 0; z-index: 1; overflow-y: auto; overscroll-behavior: contain; isolation: isolate;
+    display: grid; justify-items: center; align-content: start;
+    padding: max(72px, calc(env(safe-area-inset-top) + 60px)) max(16px, env(safe-area-inset-right)) max(40px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+    animation: fade-in 0.5s var(--ease) both;
+  }
+  .down[hidden] { display: none; }
+  @keyframes fade-in { from { opacity: 0; } }
+  .down :global(.down-tiles) {
+    position: fixed; inset: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none;
+    -webkit-mask-image: radial-gradient(ellipse at 50% 30%, #000, transparent 70%); mask-image: radial-gradient(ellipse at 50% 30%, #000, transparent 70%);
+  }
+  .down-inner { width: min(100%, 520px); display: grid; gap: 16px; justify-items: start; }
+  .down-inner h2 { font-size: clamp(2.1rem, 6vw, 3rem); line-height: 1.02; margin-top: 6px; outline: none; }
+  .down-lede { color: var(--muted); font-size: 1.12rem; }
+  .back { width: 100%; padding: 12px 16px; border-radius: 14px; border: 1px solid var(--turq-ink); background: var(--surface); }
+  .back[hidden] { display: none; }
+
+  .enquiry, .sent {
+    width: 100%; display: grid; gap: 16px; margin-top: 6px; padding: clamp(18px, 4vw, 26px);
+    background: color-mix(in oklab, var(--surface) 92%, transparent); border: 1px solid var(--line); border-radius: var(--radius-lg); box-shadow: var(--shadow);
+  }
+  .enquiry[hidden], .sent[hidden] { display: none; }
+  .field { display: grid; gap: 6px; }
+  .field label { font-weight: 600; font-size: 0.95rem; }
+  .field input, .field textarea {
+    width: 100%; min-height: 48px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg);
+    font-size: 1rem; line-height: 1.4; transition: border-color 0.2s, box-shadow 0.3s var(--ease);
+  }
+  .field textarea { resize: vertical; min-height: 112px; }
+  .field input::placeholder, .field textarea::placeholder { color: var(--muted); opacity: 0.85; }
+  .field input:focus-visible, .field textarea:focus-visible { outline: none; border-color: var(--turq); box-shadow: 0 0 0 4px rgb(60 198 192 / 0.22); }
+  .field [aria-invalid='true'] { border-color: var(--gold); }
+  .help { color: var(--muted); font-size: 0.86rem; }
+  .hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+  .form-error { color: var(--gold-ink); font-weight: 600; font-size: 0.95rem; }
+  .form-error[hidden] { display: none; }
+  .send-btn { justify-self: start; }
+  .send-btn[disabled] { opacity: 0.7; cursor: progress; }
+  .sent h3 { font-size: 1.7rem; }
+  .sent p { color: var(--muted); }
+  .ref { color: var(--text); font-weight: 600; letter-spacing: 0.02em; }
+
+  .down-links { display: flex; flex-wrap: wrap; gap: 10px 22px; margin-top: 8px; }
+  .down-links a, .link-btn {
+    display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0; border: 0; background: none; cursor: pointer;
+    color: var(--turq-ink); font-weight: 600; font-size: 0.97rem; text-decoration: none;
+  }
+  .down-links a :global(svg), .link-btn :global(svg) { width: 16px; height: 16px; }
+  .down-links a:hover, .link-btn:hover { text-decoration: underline; }
 
   .home {
     position: absolute; top: max(12px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); z-index: 2;

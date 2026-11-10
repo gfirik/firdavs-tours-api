@@ -5,7 +5,8 @@ import { analytics as config } from '../lib/analytics-config';
  * PostHog, cookieless (memory persistence, so no consent banner; a returning visitor
  * looks new). The typed question is never sent: only whether there was one and its length.
  *
- * Events: $pageview, section_viewed, planner_opened, planner_handoff, planner_copy_clicked,
+ * Events: $pageview, section_viewed, planner_opened, planner_handoff, planner_unavailable,
+ * planner_recovered, planner_copy_clicked,
  * agency_cta_click, outbound_clicked. Server events (quote_served, booking_request_created)
  * come from lib/analytics.js.
  */
@@ -55,6 +56,17 @@ function trackPlanner() {
     has_question: q.length > 0,
     question_length: q.length,
   });
+  // No answer from the planner within the wait: the page switched to the enquiry form.
+  let down = false;
+  const reportDown = () => {
+    if (down) return;
+    down = true;
+    posthog.capture('planner_unavailable', { reason: 'no_response', has_question: q.length > 0 });
+  };
+  if ((window as any).__planner?.state === 'unavailable') reportDown();
+  document.addEventListener('planner:unavailable', reportDown);
+  document.addEventListener('planner:back', () => posthog.capture('planner_recovered'));
+
   if (!q) return;
   let sent = false;
   const report = (state: 'delivered' | 'failed') => {

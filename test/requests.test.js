@@ -53,3 +53,12 @@ test('honeypot field rejects bots', async () => {
 test('GET without admin token -> 401', async () => {
   assert.equal((await call({ method: 'GET' })).status, 401);
 });
+
+test('enquiry from the /plan fallback -> 201 with FT- id, same honeypot and rate limit', async () => {
+  const enquiry = { kind: 'enquiry', name: 'Test User', contact: 'test@example.com', message: 'Family of four in April, what do you suggest?', source: 'plan_fallback' };
+  const r = await call({ body: enquiry, ip: '7.7.7.7' });
+  assert.equal(r.status, 201);
+  assert.match(r.body.request_id, /^FT-[A-Z0-9]+$/);
+  assert.equal((await call({ body: { ...enquiry, website: 'x' }, ip: '7.7.7.7' })).status, 400);
+  assert.equal((await call({ body: { ...enquiry, message: '' }, ip: '7.7.7.7' })).status, 422);
+});
