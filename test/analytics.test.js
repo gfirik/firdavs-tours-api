@@ -111,3 +111,15 @@ test('analytics: duplicates and rejected requests send nothing', async () => {
   await run(requestsHandler, { method: 'POST', body: { name: 'x' } });
   assert.equal(calls.filter((c) => c.body.event === 'booking_request_created').length, 1);
 });
+
+test('analytics: enquiries are counted with kind, never the message', async () => {
+  process.env.VERCEL_ENV = 'production';
+  const body = { kind: 'enquiry', name: 'Test User', contact: 'test@example.com', message: 'Secret trip 9911 to Khiva', source: 'plan_fallback' };
+  const out = await run(requestsHandler, { method: 'POST', body });
+  assert.equal(out.status, 201);
+  const ev = calls.find((c) => c.body.event === 'booking_request_created');
+  assert.equal(ev.body.properties.kind, 'enquiry');
+  assert.equal(ev.body.properties.channel, 'plan_fallback');
+  const raw = JSON.stringify(ev.body);
+  for (const s of ['9911', 'Test User', 'test@example.com']) assert.ok(!raw.includes(s), `no "${s}" in the event`);
+});
