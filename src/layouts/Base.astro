@@ -16,8 +16,13 @@ interface Props {
   jsonLd?: object[];
   noindex?: boolean;
   bodyClass?: string;
+  /** Social card title and text, when they should differ from the page title and description. */
+  ogTitle?: string;
+  ogDescription?: string;
 }
 const { title, description, path, jsonLd = [], noindex = false, bodyClass } = Astro.props;
+const ogTitle = Astro.props.ogTitle ?? title;
+const ogDescription = Astro.props.ogDescription ?? description;
 const canonical = new URL(path, SITE.url).href.replace(/\/$/, path === '/' ? '/' : '');
 const og = new URL('/og.jpg', SITE.url).href;
 ---
@@ -41,16 +46,16 @@ const og = new URL('/og.jpg', SITE.url).href;
 
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content={SITE.name} />
-    <meta property="og:title" content={title} />
-    <meta property="og:description" content={description} />
+    <meta property="og:title" content={ogTitle} />
+    <meta property="og:description" content={ogDescription} />
     <meta property="og:url" content={canonical} />
     <meta property="og:image" content={og} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="Firdavs Tours: plan Uzbekistan in one conversation" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content={title} />
-    <meta name="twitter:description" content={description} />
+    <meta name="twitter:title" content={ogTitle} />
+    <meta name="twitter:description" content={ogDescription} />
     <meta name="twitter:image" content={og} />
     {jsonLd.map((d) => <script type="application/ld+json" set:html={JSON.stringify(d)} />)}
     <slot name="head" />

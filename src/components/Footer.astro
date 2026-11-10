@@ -1,9 +1,15 @@
 ---
 import Mark from './Mark.astro';
+import Icon from './Icon.astro';
+import { AGENCY } from '../lib/site';
 interface Props { note?: string }
 const { note = 'Prices are 2026 estimates in USD per person, confirmed by a consultant before booking.' } = Astro.props;
 ---
 <footer class="site-footer">
+  <div class="wrap agency" data-agency-line>
+    <p><strong>Demo by fhsystems.</strong> Want an AI agent like this for your business?</p>
+    <a class="btn btn-ghost build" href={AGENCY.link('footer')} rel="noopener" data-agency="footer">Build mine <Icon name="arrow" /></a>
+  </div>
   <div class="wrap grid">
     <div class="about">
       <a class="brand" href="/" aria-label="Firdavs Tours, home"><Mark size={32} /><span>Firdavs Tours</span></a>
@@ -22,12 +28,18 @@ const { note = 'Prices are 2026 estimates in USD per person, confirmed by a cons
   </div>
   <div class="wrap base">
     <p>{note}</p>
-    <a class="badge" href="https://fhsystems.dev" rel="noopener">Built by <strong>fhsystems</strong></a>
+    <a class="badge" href={AGENCY.url} rel="noopener" data-agency="footer_badge">Built by <strong>fhsystems</strong></a>
   </div>
 </footer>
 
 <style>
-  .site-footer { border-top: 1px solid var(--line); background: var(--bg-deep); padding-top: 56px; }
+  .site-footer { border-top: 1px solid var(--line); background: var(--bg-deep); }
+  .agency {
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px;
+    padding-block: 18px; margin-bottom: 44px; border-bottom: 1px solid var(--line-soft); color: var(--muted);
+  }
+  .agency strong { color: var(--text); font-weight: 600; }
+  .build { min-height: 42px; padding: 0 18px; font-size: 0.95rem; white-space: nowrap; }
   .grid { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 32px 64px; padding-bottom: 40px; }
   .about { max-width: 26rem; display: grid; gap: 14px; }
   .about p { color: var(--muted); }

@@ -70,7 +70,8 @@ import { PLANNER_ORIGIN } from '../lib/site';
       title="Firdavs Tours trip planner"
       allow="microphone; clipboard-write"
     ></iframe>
-    <a class="home" href="/" aria-label="Back to Firdavs Tours home"><Icon name="home" /></a>
+    <a class="home" href="/" aria-label="Back to Firdavs Tours home" aria-describedby="home-tip"><Icon name="home" /><span class="tip" id="home-tip" role="tooltip">Back to home</span></a>
+    <a class="demo-chip" href="/about" data-agency="plan_chip">Demo by fhsystems</a>
 
     <div class="hint" role="status" aria-live="polite" hidden data-hint>
       <p data-hint-text>Your trip is copied, paste it with <kbd>Ctrl</kbd>+<kbd>V</kbd> / <kbd>⌘</kbd><kbd>V</kbd></p>
@@ -148,6 +149,21 @@ import { PLANNER_ORIGIN } from '../lib/site';
     transition: color 0.2s, border-color 0.2s;
   }
   .home:hover { color: var(--text); border-color: var(--line); }
+  .tip {
+    position: absolute; top: calc(100% + 8px); right: 0; padding: 6px 10px; border-radius: 8px; white-space: nowrap;
+    font-size: 0.82rem; font-weight: 600; color: var(--text); background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow);
+    opacity: 0; transform: translateY(-4px); pointer-events: none; transition: opacity 0.18s, transform 0.18s var(--ease);
+  }
+  .home:hover .tip, .home:focus-visible .tip { opacity: 1; transform: none; }
+  @media (hover: none) { .home:hover .tip { opacity: 0; } }
+  .demo-chip {
+    position: absolute; z-index: 2; top: max(12px, env(safe-area-inset-top)); left: max(12px, env(safe-area-inset-left));
+    height: 30px; display: inline-flex; align-items: center; padding: 0 11px; border-radius: 999px;
+    font-size: 0.78rem; font-weight: 600; letter-spacing: 0.01em; text-decoration: none; white-space: nowrap;
+    color: var(--muted); background: color-mix(in oklab, var(--surface) 70%, transparent); border: 1px solid var(--line-soft);
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .demo-chip:hover { color: var(--text); border-color: var(--line); }
   .home :global(svg) { width: 19px; height: 19px; }
 
   .hint {
