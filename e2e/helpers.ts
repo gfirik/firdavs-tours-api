@@ -5,9 +5,15 @@ export const PLANNER = 'https://ig63smceaks7.run.agentplace.io';
 /**
  * Replace the real planner with a stub that speaks the same parent protocol:
  * posts "SYN", accepts "ACK" + MessagePort, ACKs `agent.message.send` notifications
- * and shows the received text. `ack: false` simulates a planner that never confirms.
+ * and shows the received text. `ack: false` simulates a planner that never confirms;
+ * `down: true` an unavailable one.
  */
-export async function stubPlanner(page: Page, { ack = true } = {}) {
+export async function stubPlanner(page: Page, { ack = true, down = false } = {}) {
+  // `down: true` behaves like the outage: an error page that never sends SYN.
+  if (down) {
+    await page.route(`${PLANNER}/**`, (route) => route.fulfill({ status: 502, contentType: 'text/html', body: '<!doctype html><title>502</title><p>Bad gateway</p>' }));
+    return;
+  }
   await page.route(`${PLANNER}/**`, (route) =>
     route.fulfill({
       contentType: 'text/html; charset=utf-8',

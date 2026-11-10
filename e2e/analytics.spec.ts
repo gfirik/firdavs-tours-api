@@ -1,6 +1,40 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Browser } from '@playwright/test';
 import { gunzipSync } from 'node:zlib';
 import { stubPlanner } from './helpers';
+
+/**
+ * Serves the local build as https://tours.fhsystems.dev so the host check passes,
+ * and captures what PostHog would send instead of letting it leave the machine.
+ */
+async function liveHost(browser: Browser, baseURL: string | undefined) {
+  // PostHog drops events from bots (headless user agent, navigator.webdriver), so this page presents as normal Chrome.
+  const context = await browser.newContext({ userAgent: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', viewport: { width: 1366, height: 860 } });
+  await context.addInitScript(() => Object.defineProperty(Navigator.prototype, 'webdriver', { get: () => false }));
+  const page = await context.newPage();
+  const events: { event: string; properties: Record<string, any> }[] = [];
+  const raw: string[] = [];
+  await page.route('https://tours.fhsystems.dev/**', async (route) => {
+    const url = new URL(route.request().url());
+    if (url.pathname.startsWith('/ingest/')) {
+      const buf = route.request().postDataBuffer();
+      if (buf?.length) {
+        let text = buf.toString('utf8');
+        const c = url.searchParams.get('compression');
+        if (c === 'gzip-js' || c === 'gzip') text = gunzipSync(buf).toString('utf8');
+        else if (c === 'base64') text = Buffer.from(decodeURIComponent(text.replace(/^data=/, '')), 'base64').toString('utf8');
+        raw.push(text);
+        try {
+          const body = JSON.parse(text);
+          for (const e of Array.isArray(body) ? body : body.batch ?? [body]) if (e?.event) events.push(e);
+        } catch { /* flags/config calls */ }
+      }
+      return route.fulfill({ status: 200, contentType: 'application/json', body: '{}' });
+    }
+    const res = await route.fetch({ url: baseURL + url.pathname + url.search });
+    return route.fulfill({ response: res });
+  });
+  return { context, page, events, raw };
+}
 
 const isAnalytics = (url: string) => /\/ingest\/|posthog|\/_astro\/analytics\./i.test(url);
 
@@ -18,34 +52,7 @@ test.describe('analytics', () => {
 
   test('on the live host: planner events, source and handoff, never the question text', async ({ browser, baseURL }, info) => {
     test.skip(info.project.name !== 'desktop' || !!process.env.BASE_URL, 'desktop, local build only');
-    // Serve the local build as https://tours.fhsystems.dev so the host check passes,
-    // and capture what PostHog would send instead of letting it leave the machine.
-    // PostHog drops events from bots (headless user agent, navigator.webdriver), so this page presents as normal Chrome.
-    const context = await browser.newContext({ userAgent: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', viewport: { width: 1366, height: 860 } });
-    await context.addInitScript(() => Object.defineProperty(Navigator.prototype, 'webdriver', { get: () => false }));
-    const page = await context.newPage();
-    const events: { event: string; properties: Record<string, any> }[] = [];
-    const raw: string[] = [];
-    await page.route('https://tours.fhsystems.dev/**', async (route) => {
-      const url = new URL(route.request().url());
-      if (url.pathname.startsWith('/ingest/')) {
-        const buf = route.request().postDataBuffer();
-        if (buf?.length) {
-          let text = buf.toString('utf8');
-          const c = url.searchParams.get('compression');
-          if (c === 'gzip-js' || c === 'gzip') text = gunzipSync(buf).toString('utf8');
-          else if (c === 'base64') text = Buffer.from(decodeURIComponent(text.replace(/^data=/, '')), 'base64').toString('utf8');
-          raw.push(text);
-          try {
-            const body = JSON.parse(text);
-            for (const e of Array.isArray(body) ? body : body.batch ?? [body]) if (e?.event) events.push(e);
-          } catch { /* flags/config calls */ }
-        }
-        return route.fulfill({ status: 200, contentType: 'application/json', body: '{}' });
-      }
-      const res = await route.fetch({ url: baseURL + url.pathname + url.search });
-      return route.fulfill({ response: res });
-    });
+    const { context, page, events, raw } = await liveHost(browser, baseURL);
     await stubPlanner(page);
 
     const secret = 'Secret question 4271 about Khiva in April';
@@ -68,6 +75,21 @@ test.describe('analytics', () => {
     for (const e of events) expect(String(e.properties.$current_url ?? '')).not.toContain('?q=');
     for (const r of raw) expect(r).not.toContain('4271');
     for (const r of raw) expect(r).not.toContain(encodeURIComponent(secret).slice(0, 20));
+    await context.close();
+  });
+
+  test('on the live host: an outage reports planner_unavailable, never the question text', async ({ browser, baseURL }, info) => {
+    test.skip(info.project.name !== 'desktop' || !!process.env.BASE_URL, 'desktop, local build only');
+    test.setTimeout(60_000);
+    const { context, page, events, raw } = await liveHost(browser, baseURL);
+    await stubPlanner(page, { down: true });
+    const secret = 'Outage question 5531 about Bukhara';
+    await page.goto('https://tours.fhsystems.dev/plan?q=' + encodeURIComponent(secret));
+    await expect(page.locator('[data-down]')).toBeVisible({ timeout: 15_000 });
+    await expect.poll(() => events.map((e) => e.event), { timeout: 15_000 }).toContain('planner_unavailable');
+    expect(events.find((e) => e.event === 'planner_unavailable')!.properties).toMatchObject({ reason: 'no_response', has_question: true });
+    expect(events.find((e) => e.event === 'planner_handoff')?.properties.state).toBe('failed');
+    for (const r of raw) expect(r).not.toContain('5531');
     await context.close();
   });
 });
