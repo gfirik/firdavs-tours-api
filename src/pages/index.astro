@@ -5,7 +5,7 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import Icon from '../components/Icon.astro';
 import TileField from '../components/TileField.astro';
-import { SITE, STARTERS } from '../lib/site';
+import { SITE, STARTERS, AGENCY } from '../lib/site';
 import { tours, tourById, fromPrice, usd, nextDepartures, fmtDate, quote, tourStarter, planHref } from '../lib/catalogue';
 import { photo } from '../lib/photos';
 import { FAQ } from '../data/faq';
@@ -77,7 +77,7 @@ const jsonLd = [
   <Header />
   <main id="main">
     <!-- HERO: the conversation starts here -->
-    <section class="hero" aria-labelledby="hero-title">
+    <section class="hero" aria-labelledby="hero-title" data-section="hero">
       <TileField class="hero-tiles" id="hero-tile" />
       <div class="wrap hero-grid">
         <div class="hero-copy">
@@ -99,14 +99,14 @@ const jsonLd = [
               ))}
             </ul>
           </div>
-          <p class="hero-langs">Plan in <span lang="en">English</span>, <span lang="uz">Oʻzbekcha</span> or <span lang="ru">Русский</span>.</p>
+          <p class="hero-trust"><span>Exact prices</span><span aria-hidden="true">·</span><span><abbr title="English, Oʻzbekcha, Русский">EN / UZ / RU</abbr></span><span aria-hidden="true">·</span><span>Reply within 24h</span></p>
         </div>
         <div class="hero-arch" role="img" aria-label={arch.alt}></div>
       </div>
     </section>
 
     <!-- TOURS -->
-    <section id="tours" class="section tours" aria-labelledby="tours-title">
+    <section id="tours" class="section tours" aria-labelledby="tours-title" data-section="tours">
       <div class="wrap">
         <div class="section-head">
           <h2 id="tours-title">Journeys we run</h2>
@@ -158,7 +158,7 @@ const jsonLd = [
     </section>
 
     <!-- HOW IT WORKS -->
-    <section id="how" class="section how" aria-labelledby="how-title">
+    <section id="how" class="section how" aria-labelledby="how-title" data-section="how">
       <div class="wrap how-grid">
         <div class="how-copy">
           <div class="section-head">
@@ -201,7 +201,7 @@ const jsonLd = [
     </section>
 
     <!-- WHY -->
-    <section class="section why" aria-labelledby="why-title">
+    <section class="section why" aria-labelledby="why-title" data-section="why">
       <div class="wrap">
         <div class="section-head"><h2 id="why-title">Why Firdavs Tours</h2></div>
         <ul class="why-list">
@@ -226,7 +226,7 @@ const jsonLd = [
     </section>
 
     <!-- DESTINATIONS -->
-    <section class="section dest" aria-labelledby="dest-title">
+    <section class="section dest" aria-labelledby="dest-title" data-section="destinations">
       <div class="wrap"><div class="section-head">
         <h2 id="dest-title">Where you can go</h2>
         <p class="lede">From Timurid Samarkand to the dry bed of the Aral Sea. Pick a place to start a plan around it.</p>
@@ -244,7 +244,7 @@ const jsonLd = [
     </section>
 
     <!-- FAQ -->
-    <section id="faq" class="section faq" aria-labelledby="faq-title">
+    <section id="faq" class="section faq" aria-labelledby="faq-title" data-section="faq">
       <div class="wrap faq-grid">
         <div class="section-head">
           <h2 id="faq-title">Questions travellers ask</h2>
@@ -261,8 +261,28 @@ const jsonLd = [
       </div>
     </section>
 
+    <!-- AGENCY: the demo, and who to ask for one -->
+    <section id="for-business" class="section agency" aria-labelledby="agency-title" data-section="agency">
+      <div class="wrap agency-grid">
+        <div class="agency-copy">
+          <p class="agency-tag">A demo by fhsystems</p>
+          <h2 id="agency-title">Want a planner like this for your business?</h2>
+          <p class="lede">Firdavs Tours is a demonstration brand on real 2026 prices. The same kind of agent fits clinics, rental companies, venues and other service businesses.</p>
+          <div class="agency-actions">
+            <a class="btn btn-primary" href={AGENCY.link('section')} rel="noopener" data-agency="section">Get one for your business <Icon name="arrow" /></a>
+            <a class="agency-how" href="/about">See how it was built</a>
+          </div>
+        </div>
+        <ul class="agency-points">
+          <li><h3>Answers customers 24/7 in their language</h3><p>Day or night, in the languages your customers write in.</p></li>
+          <li><h3>Quotes exact prices from your own price list</h3><p>Every number comes from your prices, never invented.</p></li>
+          <li><h3>Turns chats into booking requests</h3><p>Your team gets a clear request with a reference number to act on.</p></li>
+        </ul>
+      </div>
+    </section>
+
     <!-- CLOSING -->
-    <section class="closing" aria-labelledby="closing-title">
+    <section class="closing" aria-labelledby="closing-title" data-section="closing">
       <Picture class="closing-img" src={closing.src} alt="" formats={['avif', 'webp']} widths={[640, 1024, 1600]} sizes="100vw" loading="lazy" decoding="async" />
       <div class="wrap closing-inner">
         <h2 id="closing-title">Your Uzbekistan starts with a question</h2>
@@ -271,6 +291,9 @@ const jsonLd = [
       </div>
     </section>
   </main>
+  <div class="sticky-plan" data-sticky-plan>
+    <a class="btn btn-primary" href="/plan" data-plan-source="cta" tabindex="-1">Plan my trip <Icon name="arrow" /></a>
+  </div>
   <Footer />
 </Base>
 
@@ -286,6 +309,24 @@ const jsonLd = [
     if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); form?.requestSubmit(); }
   });
   document.querySelectorAll('a[href^="/plan"]').forEach((a) => a.addEventListener('click', mark));
+
+  // Mobile "Plan my trip" bar: shown once the hero has scrolled away, hidden again near the
+  // closing call to action and the footer. Fixed and moved with transform only, so no layout shift.
+  const bar = document.querySelector<HTMLElement>('[data-sticky-plan]');
+  const heroEl = document.querySelector('.hero');
+  const ends = document.querySelectorAll('.closing, .site-footer');
+  if (bar && heroEl && 'IntersectionObserver' in window) {
+    let pastHero = false;
+    const near = new Set<Element>();
+    const update = () => {
+      const show = pastHero && near.size === 0;
+      bar.classList.toggle('is-on', show);
+      bar.querySelector('a')!.tabIndex = show ? 0 : -1;
+    };
+    new IntersectionObserver(([e]) => { pastHero = !e.isIntersecting && e.boundingClientRect.top < 0; update(); }).observe(heroEl);
+    const io = new IntersectionObserver((es) => { for (const e of es) e.isIntersecting ? near.add(e.target) : near.delete(e.target); update(); });
+    ends.forEach((el) => io.observe(el));
+  }
 </script>
 
 <style>
@@ -334,7 +375,8 @@ const jsonLd = [
   .planner .chips { gap: 8px; }
   .planner .chip { font-size: 0.95rem; min-height: 42px; background: transparent; }
   @media (max-width: 520px) { .ask textarea { min-height: 84px; padding: 16px 68px 16px 18px; font-size: 1.06rem; } }
-  .hero-langs { color: var(--muted); font-size: 0.95rem; }
+  .hero-trust { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: -6px; padding-left: 6px; color: var(--muted); font-size: 0.95rem; font-weight: 500; }
+  .hero-trust abbr { text-decoration: none; }
 
   .hero-arch { display: none; }
   @media (min-width: 960px) {
@@ -452,6 +494,7 @@ const jsonLd = [
     scroll-padding-inline: max(var(--gutter), calc((100vw - var(--max)) / 2));
   }
   .dest-strip:focus-visible { outline-offset: -4px; }
+  .dest-strip a:focus-visible { outline-offset: 2px; }
   .dest-strip li { scroll-snap-align: start; }
   .dest-strip a { position: relative; display: block; border-radius: var(--radius-lg); overflow: hidden; text-decoration: none; color: #f3ede0; aspect-ratio: 3 / 4; background: var(--surface); }
   .dest-strip :global(picture) { height: 100%; }
@@ -477,6 +520,37 @@ const jsonLd = [
   .faq-list summary:hover span { color: var(--turq-ink); }
   .faq-list details p { padding: 0 2px 24px; color: var(--muted); max-width: 40rem; }
   .faq-list details p :global(a) { color: var(--turq-ink); }
+
+  /* ---------- Agency ---------- */
+  .agency { border-top: 1px solid var(--line-soft); }
+  .agency-grid { display: grid; gap: 40px; align-items: start; }
+  @media (min-width: 960px) { .agency-grid { grid-template-columns: 1fr 1fr; gap: 80px; } }
+  .agency-copy { display: grid; gap: 18px; justify-items: start; }
+  .agency-tag { font-size: 0.82rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold-ink); }
+  .agency-copy h2 { max-width: 16ch; }
+  .agency-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 24px; margin-top: 8px; }
+  .agency-how { color: var(--turq-ink); font-weight: 600; text-decoration: underline; text-decoration-color: color-mix(in oklab, var(--turq-ink) 45%, transparent); }
+  .agency-how:hover { text-decoration-color: currentColor; }
+  .agency-points { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+  .agency-points li { padding: 22px 0 22px 30px; border-bottom: 1px solid var(--line-soft); display: grid; gap: 6px; position: relative; }
+  .agency-points li::before { content: ''; position: absolute; left: 4px; top: 32px; width: 9px; height: 9px; background: var(--gold); transform: rotate(45deg); border-radius: 1px; }
+  .agency-points h3 { font-size: 1.45rem; }
+  .agency-points p { color: var(--muted); }
+
+  /* ---------- Sticky mobile CTA ---------- */
+  .sticky-plan { display: none; }
+  @media (max-width: 760px) {
+    .sticky-plan {
+      display: block; position: fixed; z-index: 40; left: 0; right: 0; bottom: 0;
+      padding: 12px max(16px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+      background: color-mix(in oklab, var(--bg) 86%, transparent); border-top: 1px solid var(--line-soft);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      transform: translateY(110%); visibility: hidden;
+      transition: transform 0.4s var(--ease), visibility 0s linear 0.4s;
+    }
+    .sticky-plan.is-on { transform: none; visibility: visible; transition: transform 0.4s var(--ease), visibility 0s; }
+    .sticky-plan .btn { width: 100%; }
+  }
 
   /* ---------- Closing ---------- */
   .closing { position: relative; isolation: isolate; overflow: hidden; color: #f3ede0; }

@@ -39,7 +39,8 @@ test.describe('landing page', () => {
 test.describe('content rules', () => {
   test('languages are listed English, Uzbek, Russian', async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('.hero-langs')).toHaveText('Plan in English, Oʻzbekcha or Русский.');
+    await expect(page.locator('.hero-trust')).toHaveText('Exact prices·EN / UZ / RU·Reply within 24h');
+    await expect(page.locator('.hero-trust abbr')).toHaveAttribute('title', 'English, Oʻzbekcha, Русский');
     await expect(page.locator('.why-list h3').nth(1)).toHaveText('English, Oʻzbekcha, Русский');
     await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /English, Uzbek or Russian/);
     const body = await page.locator('body').innerText();
@@ -115,7 +116,16 @@ test.describe('pages', () => {
   test('/about shows the four test runs', async ({ page }) => {
     await page.goto('/about');
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-    for (const v of ['48%', '76%', '44%', '100%']) await expect(page.locator('.bars')).toContainText(v);
+    for (const v of ['48%', '76%', '44%', '100%']) await expect(page.locator('.eval-chart')).toContainText(v);
+    await expect(page.locator('.demo-label').first()).toHaveText(/Demo project by\s+fhsystems/);
+    await expect(page.locator('.glance dt')).toHaveText(['Problem', 'What the agent does', 'Stack', 'Results']);
+    await expect(page.locator('.arch svg')).toContainText('/api/requests');
+    await expect(page.locator('#limits-title')).toBeVisible();
+    const cta = new URL((await page.locator('[data-agency="about"]').getAttribute('href'))!);
+    expect([cta.host, cta.searchParams.get('utm_source'), cta.searchParams.get('utm_medium')]).toEqual(['fhsystems.dev', 'tours', 'about']);
+    await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', /demo .*by fhsystems/i);
+    await expect(page.locator('meta[property="og:description"]')).toHaveAttribute('content', /demo project by fhsystems/i);
+    await expect(page.locator('video')).toHaveCount(0); // no public/media/demo.mp4 in the repo
     await expect(page.locator('footer')).toContainText('demonstration brand based on real 2026 prices');
   });
 
@@ -137,7 +147,9 @@ test.describe('layout and copy rules', () => {
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
       expect(overflow).toBeLessThanOrEqual(0);
       const text = (await page.locator('body').innerText()).toLowerCase();
-      for (const word of ['agentplace', '/api/', 'iframe']) expect(text, `"${word}" visible on ${path}`).not.toContain(word);
+      // The /about case study names the stack on purpose; travellers' pages never do.
+      const words = path === '/about' ? ['iframe'] : ['agentplace', '/api/', 'iframe'];
+      for (const word of words) expect(text, `"${word}" visible on ${path}`).not.toContain(word);
     });
   }
 

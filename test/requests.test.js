@@ -22,6 +22,7 @@ test('valid request -> 201 with FT- id', async () => {
   const r = await call({ body: good });
   assert.equal(r.status, 201);
   assert.match(r.body.request_id, /^FT-[A-Z0-9]+$/);
+  assert.equal(r.body.notified, false); // Telegram is off without env vars
 });
 
 test('missing fields -> 422 listing them', async () => {
