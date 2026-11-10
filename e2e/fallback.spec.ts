@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { stubPlanner } from './helpers';
+import { stubPlanner, plannerText } from './helpers';
 
 const Q = 'Two of us in May, mountains and Samarkand';
 
@@ -9,11 +9,14 @@ async function openDown(page: Page, q = Q) {
   await page.goto('/plan' + (q ? '?q=' + encodeURIComponent(q) : ''));
   await expect(page.locator('[data-down]')).toBeHidden(); // still waiting
   await page.clock.fastForward(10_500);
+  await expect(page.locator('.loading-text')).toHaveText('Waking up your planner, this can take up to a minute…');
+  await expect(page.locator('[data-down]')).toBeHidden(); // a sleeping agent gets a full minute
+  await page.clock.fastForward(50_500);
   await expect(page.locator('[data-down]')).toBeVisible();
 }
 
 test.describe('planner unavailable', () => {
-  test('after 10 s without the planner, /plan shows the enquiry form with the question', async ({ page }) => {
+  test('after 60 s without the planner, /plan shows the enquiry form with the question', async ({ page }) => {
     await openDown(page);
     const down = page.locator('[data-down]');
     await expect(down.getByRole('heading', { level: 2 })).toHaveText('The planner is taking a break.');
@@ -66,6 +69,26 @@ test.describe('planner unavailable', () => {
     await page.getByRole('button', { name: 'Send to a consultant' }).click();
     await expect(page.getByRole('alert')).toHaveText('Please tell us a little about your trip.');
     expect(posted).toBe(0);
+  });
+
+  test('a sleeping planner: "waking up" after 10 s, reloads until it boots, then carries on', async ({ page }) => {
+    const reqs = await stubPlanner(page, { wakeAfter: 2 });
+    await page.clock.install();
+    await page.goto('/plan?q=' + encodeURIComponent(Q));
+    await expect(page.locator('.loading-text')).toHaveText('Opening your planner…');
+    await page.clock.fastForward(10_500); // first reload (8 s after the error page loaded) and the waking message
+    await expect(page.locator('.loading-text')).toHaveText('Waking up your planner, this can take up to a minute…');
+    await expect(page.locator('[data-status]')).toHaveText(/Waking up your planner/);
+    await page.clock.fastForward(17_000); // second reload, 16 s later: the planner is awake now
+    await expect.poll(() => page.evaluate(() => (window as any).__planner.state)).toBe('ready');
+    await expect(page.locator('#planner')).toBeVisible();
+    await expect(plannerText(page)).toHaveText(Q); // the question still arrives
+    const p = await page.evaluate(() => (window as any).__planner);
+    expect(p.reloads).toBe(2);
+    expect(p.msToReady).toBeGreaterThan(10_000);
+    expect(reqs.count).toBe(3);
+    await page.clock.fastForward(60_000);
+    await expect(page.locator('[data-down]')).toBeHidden();
   });
 
   test('a planner that answers never shows the fallback', async ({ page }) => {

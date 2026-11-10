@@ -83,13 +83,35 @@ test.describe('analytics', () => {
     test.setTimeout(60_000);
     const { context, page, events, raw } = await liveHost(browser, baseURL);
     await stubPlanner(page, { down: true });
+    await page.clock.install();
     const secret = 'Outage question 5531 about Bukhara';
     await page.goto('https://tours.fhsystems.dev/plan?q=' + encodeURIComponent(secret));
-    await expect(page.locator('[data-down]')).toBeVisible({ timeout: 15_000 });
+    await page.waitForResponse((r) => r.url().includes('/_astro/analytics.'), { timeout: 10_000 });
+    // Advance a minute in steps, so PostHog's own timers see time pass rather than one jump.
+    for (let i = 0; i < 7; i++) { await page.clock.fastForward(9_000); await page.waitForTimeout(250); }
+    await expect(page.locator('[data-down]')).toBeVisible();
     await expect.poll(() => events.map((e) => e.event), { timeout: 15_000 }).toContain('planner_unavailable');
     expect(events.find((e) => e.event === 'planner_unavailable')!.properties).toMatchObject({ reason: 'no_response', has_question: true });
     expect(events.find((e) => e.event === 'planner_handoff')?.properties.state).toBe('failed');
     for (const r of raw) expect(r).not.toContain('5531');
+    await context.close();
+  });
+
+  test('on the live host: a cold start reports planner_cold_start with seconds_to_ready', async ({ browser, baseURL }, info) => {
+    test.skip(info.project.name !== 'desktop' || !!process.env.BASE_URL, 'desktop, local build only');
+    test.setTimeout(60_000);
+    const { context, page, events } = await liveHost(browser, baseURL);
+    await stubPlanner(page, { wakeAfter: 1 });
+    await page.clock.install();
+    await page.goto('https://tours.fhsystems.dev/plan');
+    await page.waitForResponse((r) => r.url().includes('/_astro/analytics.'), { timeout: 10_000 });
+    await page.clock.fastForward(12_000); // waking message, then the reload that finds the planner awake
+    await expect.poll(() => page.evaluate(() => (window as any).__planner.state), { timeout: 10_000 }).toBe('ready');
+    await expect.poll(() => events.map((e) => e.event), { timeout: 15_000 }).toContain('planner_cold_start');
+    const cold = events.find((e) => e.event === 'planner_cold_start')!.properties;
+    expect(cold.seconds_to_ready).toBeGreaterThan(10);
+    expect(cold.reloads).toBe(1);
+    expect(events.some((e) => e.event === 'planner_unavailable')).toBe(false);
     await context.close();
   });
 });
