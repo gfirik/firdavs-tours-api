@@ -99,7 +99,9 @@ button, input, textarea { font: inherit; color: inherit; }
 a { color: inherit; text-underline-offset: 0.2em; text-decoration-thickness: 1px; }
 ::selection { background: var(--turq); color: var(--on-turq); }
 :focus { outline: none; }
-:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; border-radius: 6px; }
+:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+/* The ring follows each element's own corners; only plain text links get a small rounding. */
+a:not([class]):focus-visible { border-radius: 4px; }
 input, textarea { caret-color: var(--turq); }
 
 h1, h2, h3 {
