@@ -19,10 +19,11 @@ All prices come from `lib/tours.json`, which is also the site's single source of
 |---|---|
 | `KV_REST_API_URL`, `KV_REST_API_TOKEN` | Upstash Redis (added by the Vercel integration). Without them, requests are kept in memory (demo only) |
 | `ADMIN_TOKEN` | Bearer token for `GET /api/requests` |
-| `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | Optional: the sales team gets a Telegram message on every new request |
+| `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | Optional: the sales team gets a Telegram message on every new request (reference, tour, dates, group, hotel class, total, language, contact). Off until both are set |
+| `VERCEL_ENV` | Set by Vercel. `quote_served` and `booking_request_created` analytics events are sent only in `production` (see README) |
 
 ## Production notes
 
 - Prices live in `lib/tours.json`; in production this would be a CMS/DB with an admin UI, versioned so quotes are reproducible.
-- Done: per-IP rate limit, honeypot, idempotency keys, Telegram alerts, health check.
+- Done: per-IP rate limit, honeypot, idempotency keys, Telegram alerts (off until configured), anonymous server analytics, health check.
 - Next: admin UI for prices and request status, a signed webhook for the CRM, structured logs and alerting, signed requests between planner and API.
