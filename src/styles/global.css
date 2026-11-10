@@ -59,7 +59,9 @@
 }
 
 /* Overrides computed with Capsize from each face's metrics (unitsPerEm, ascender, descender, xWidthAvg).
-   Liberation Serif/Sans are metric-compatible with Times New Roman/Arial and cover Linux. */
+   Liberation Serif/Sans are metric-compatible with Times New Roman/Arial and cover Linux.
+   Arial's size-adjust is then tuned to the measured width of the site's own copy (Capsize's average
+   ran 0.6% wide, enough to re-wrap a paragraph on swap); ascent/descent are rescaled to match. */
 @font-face {
   font-family: 'Cormorant Fallback Georgia';
   src: local('Georgia');
@@ -73,7 +75,7 @@
 @font-face {
   font-family: 'Source Sans 3 Fallback Arial';
   src: local('Arial'), local('ArialMT'), local('Helvetica'), local('Liberation Sans'), local('LiberationSans');
-  ascent-override: 109.2105%; descent-override: 42.6604%; line-gap-override: 0%; size-adjust: 93.7639%;
+  ascent-override: 109.8713%; descent-override: 42.9185%; line-gap-override: 0%; size-adjust: 93.2000%;
 }
 @font-face {
   font-family: 'Source Sans 3 Fallback Roboto';

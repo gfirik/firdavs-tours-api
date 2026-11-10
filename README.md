@@ -82,7 +82,7 @@ Every link to the agency carries `utm_source=tours` and its placement as `utm_me
 
 PostHog, the same project as fhsystems.dev (EU). The key in `lib/posthog-key.js` is public by design.
 
-- Browser: only on `tours.fhsystems.dev`; `posthog-js` is a separate chunk loaded on the first idle frame, so localhost and preview hosts never fetch it. Cookieless (`persistence: memory`), `person_profiles: identified_only`, events go through the same-origin `/ingest` proxy (`vercel.json` rewrites), super property `site: "tours"`.
+- Browser: only on `tours.fhsystems.dev`, so localhost and preview hosts never fetch it. `posthog-js` is a separate chunk, loaded on the first interaction (or after 6 s) on content pages and on the first idle frame on /plan, so it never competes with the first render. Cookieless (`persistence: memory`), `person_profiles: identified_only`, events go through the same-origin `/ingest` proxy (`vercel.json` rewrites), super property `site: "tours"`.
 - Server: `lib/analytics.js` posts to `https://eu.i.posthog.com/i/v0/e/` after the response is sent, only when `VERCEL_ENV=production`, with `$process_person_profile: false`, an 800 ms cap, and no name, contact or IP.
 - The typed question is never sent, only whether there was one and its length.
 
