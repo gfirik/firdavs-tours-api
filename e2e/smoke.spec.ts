@@ -118,8 +118,10 @@ test.describe('pages', () => {
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
     for (const v of ['48%', '76%', '44%', '100%']) await expect(page.locator('.eval-chart')).toContainText(v);
     await expect(page.locator('.demo-label').first()).toHaveText(/Demo project by\s+fhsystems/);
-    await expect(page.locator('.glance dt')).toHaveText(['Problem', 'What the agent does', 'Stack', 'Results']);
-    await expect(page.locator('.arch svg')).toContainText('/api/requests');
+    await expect(page.locator('.glance dt')).toHaveText(['The problem', 'What it does for a tour company', 'Results']);
+    await expect(page.locator('.eval-chart .run')).toHaveText(['Test round 1', 'Test round 2', 'Test round 3', 'Test round 4']);
+    await expect(page.locator('.lessons li')).toHaveCount(3);
+    await expect(page.locator('.arch, svg[aria-labelledby^="arch"]')).toHaveCount(0); // no architecture diagram
     await expect(page.locator('#limits-title')).toBeVisible();
     const cta = new URL((await page.locator('[data-agency="about"]').getAttribute('href'))!);
     expect([cta.host, cta.searchParams.get('utm_source'), cta.searchParams.get('utm_medium')]).toEqual(['fhsystems.dev', 'tours', 'about']);
@@ -140,16 +142,24 @@ test.describe('pages', () => {
 });
 
 test.describe('layout and copy rules', () => {
-  for (const path of ['/', '/about', '/credits', '/plan']) {
+  // Visitors are travellers and business owners: no stack, vendor or implementation words anywhere,
+  // the /about case study included. Whole words, so "capital" or "astronomy" never trip it.
+  const BANNED = ['agentplace', 'luna', 'node', 'node.js', 'vercel', 'upstash', 'redis', 'astro', 'posthog', 'api', 'apis', 'iframe',
+    'serverless', 'playwright', 'lighthouse', 'endpoint', 'json', 'llm', 'prompt', 'model'];
+  for (const path of ['/', '/about', '/credits', '/plan', '/no-such-page']) {
     test(`no horizontal scroll and no implementation words on ${path}`, async ({ page }) => {
       await stubPlanner(page);
       await page.goto(path);
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
       expect(overflow).toBeLessThanOrEqual(0);
       const text = (await page.locator('body').innerText()).toLowerCase();
-      // The /about case study names the stack on purpose; travellers' pages never do.
-      const words = path === '/about' ? ['iframe'] : ['agentplace', '/api/', 'iframe'];
-      for (const word of words) expect(text, `"${word}" visible on ${path}`).not.toContain(word);
+      const meta = await page.evaluate(() => [document.title, ...[...document.querySelectorAll('meta[name="description"], meta[property^="og:"]')].map((m) => m.getAttribute('content') ?? '')].join(' ').toLowerCase());
+      for (const word of BANNED) {
+        const re = new RegExp(`(^|[^a-z0-9])${word.replace('.', '\\.')}([^a-z0-9]|$)`);
+        expect(text, `"${word}" visible on ${path}`).not.toMatch(re);
+        expect(meta, `"${word}" in the title or social card of ${path}`).not.toMatch(re);
+      }
+      expect(text, `an /api/ route on ${path}`).not.toContain('/api/');
     });
   }
 

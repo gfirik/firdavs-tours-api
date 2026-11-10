@@ -32,7 +32,7 @@ test.describe('agency CTA', () => {
     await expect(s).toContainText(/clinics, rental companies, venues/);
     await expect(s.getByRole('link', { name: 'Get one for your business' })).toBeVisible();
     expect(await utm(page, '#for-business [data-agency="section"]')).toEqual({ host: 'fhsystems.dev', source: 'tours', medium: 'section' });
-    await expect(s.getByRole('link', { name: 'See how it was built' })).toHaveAttribute('href', '/about');
+    await expect(s.getByRole('link', { name: 'See the case study' })).toHaveAttribute('href', '/about');
     // Directly before "Your Uzbekistan starts with a question".
     const next = await s.evaluate((el) => el.nextElementSibling?.querySelector('h2')?.textContent);
     expect(next).toBe('Your Uzbekistan starts with a question');
