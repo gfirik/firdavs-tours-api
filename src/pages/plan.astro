@@ -11,43 +11,69 @@ import { PLANNER_ORIGIN } from '../lib/site';
   path="/plan"
   bodyClass="plan"
 >
-  <script slot="head" is:inline define:vars={{ ORIGIN: PLANNER_ORIGIN, WAIT_MS: 10000 }}>
+  <script slot="head" is:inline define:vars={{ ORIGIN: PLANNER_ORIGIN, WAKE_MS: 10000, DOWN_MS: 60000, STUCK_MS: 8000 }}>
     // The planner announces itself to its parent with "SYN" once its app has booted. That is
     // the readiness signal: an error page (502, offline) never sends it. We answer "ACK" with a
     // MessagePort and, when there is a question, send it as `agent.message.send`, which the planner
-    // acknowledges by id. No SYN within WAIT_MS -> the planner counts as unavailable and the page
-    // shows the enquiry form. See docs/AGENT_HANDOFF.md.
+    // acknowledges by id.
+    // The host puts the agent to sleep when idle; waking takes ~30–45 s, during which the URL answers
+    // with an error page that never sends SYN and never reloads itself. So: no SYN after WAKE_MS ->
+    // "waking up" on the loading screen; a frame that loaded but stays silent is reloaded (after
+    // STUCK_MS, growing with each reload so a slow device never loops; a healthy boot takes 1–3 s);
+    // no SYN after DOWN_MS -> unavailable, and the page shows the enquiry form. See docs/AGENT_HANDOFF.md.
     (function () {
       var params = new URLSearchParams(location.search);
       var q = (params.get('q') || '').trim().slice(0, 500);
       if (params.has('q')) history.replaceState(null, '', '/plan' + location.hash);
       window.__handoff = { q: q, state: q ? 'waiting' : 'none' };
-      window.__planner = { state: 'loading' };
+      window.__planner = { state: 'loading', since: performance.now(), reloads: 0, msToReady: null };
       var emit = function (name, detail) { document.dispatchEvent(new CustomEvent(name, { detail: detail })); };
 
-      var sent = false, pendingId = null, ackTimer = null, waitTimer = null;
+      var sent = false, pendingId = null, ackTimer = null, wakeTimer = null, downTimer = null, stuckTimer = null;
+      var waiting = function () { return window.__planner.state === 'loading' || window.__planner.state === 'waking'; };
       var failHandoff = function (reason) {
         if (window.__handoff.state !== 'waiting') return;
         window.__handoff.state = 'failed';
         emit('handoff:failed', { reason: reason });
       };
       var unavailable = function () {
-        if (window.__planner.state !== 'loading') return;
+        if (!waiting()) return;
+        clearTimeout(stuckTimer);
         window.__planner.state = 'unavailable';
         emit('planner:unavailable');
         failHandoff('unavailable');
       };
       window.__plannerWait = function () {
-        clearTimeout(waitTimer);
-        waitTimer = setTimeout(unavailable, WAIT_MS);
+        clearTimeout(wakeTimer); clearTimeout(downTimer); clearTimeout(stuckTimer);
+        window.__planner.since = performance.now();
+        wakeTimer = setTimeout(function () {
+          if (window.__planner.state !== 'loading') return;
+          window.__planner.state = 'waking';
+          emit('planner:waking');
+        }, WAKE_MS);
+        downTimer = setTimeout(unavailable, DOWN_MS);
       };
       window.__plannerWait();
+      // Every time the frame finishes loading without saying SYN, give it STUCK_MS, then reload:
+      // the error page shown while the agent wakes stays put on its own.
+      window.__plannerLoaded = function () {
+        clearTimeout(stuckTimer);
+        var delay = Math.min(STUCK_MS * (window.__planner.reloads + 1), 20000);
+        stuckTimer = setTimeout(function () {
+          var frame = document.getElementById('planner');
+          if (!waiting() || !frame) return;
+          window.__planner.reloads++;
+          frame.src = ORIGIN + '/';
+        }, delay);
+      };
 
       window.addEventListener('message', function (e) {
         var frame = document.getElementById('planner');
         if (e.origin !== ORIGIN || !frame || e.source !== frame.contentWindow || e.data !== 'SYN') return;
-        clearTimeout(waitTimer);
+        clearTimeout(wakeTimer); clearTimeout(downTimer); clearTimeout(stuckTimer);
         var was = window.__planner.state;
+        if (was === 'ready') { /* a reload of an already-ready frame: just re-handshake */ }
+        else window.__planner.msToReady = Math.round(performance.now() - window.__planner.since);
         window.__planner.state = 'ready';
         emit(was === 'unavailable' ? 'planner:back' : 'planner:ready');
 
@@ -81,11 +107,13 @@ import { PLANNER_ORIGIN } from '../lib/site';
       <p class="loading-q" data-loading-q></p>
     </div>
     <h1 class="sr-only" data-plan-title>Plan your trip with Firdavs Tours</h1>
+    <p class="sr-only" role="status" data-status></p>
     <iframe
       id="planner"
-      src={PLANNER_ORIGIN}
+      src={PLANNER_ORIGIN + '/'}
       title="Firdavs Tours trip planner"
       allow="microphone; clipboard-write"
+      onload="window.__plannerLoaded && window.__plannerLoaded()"
     ></iframe>
 
     <section class="down" hidden data-down aria-labelledby="down-title">
@@ -169,6 +197,7 @@ import { PLANNER_ORIGIN } from '../lib/site';
 
   // ---------- Planner ready / unavailable ----------
   const reveal = () => {
+    document.body.classList.remove('is-waking');
     down.hidden = true;
     document.body.classList.remove('is-down');
     setTimeout(() => document.body.classList.add('ready'), 350);
@@ -185,8 +214,23 @@ import { PLANNER_ORIGIN } from '../lib/site';
     document.getElementById('down-title')?.focus({ preventScroll: true });
   };
 
+  const loadingText = document.querySelector<HTMLElement>('.loading-text')!;
+  const status = document.querySelector<HTMLElement>('[data-status]')!;
+  const showWaking = () => {
+    loadingText.textContent = 'Waking up your planner, this can take up to a minute…';
+    status.textContent = 'Waking up your planner. This can take up to a minute.';
+    document.body.classList.add('is-waking');
+  };
+  const resetLoading = () => {
+    loadingText.textContent = 'Opening your planner…';
+    status.textContent = '';
+    document.body.classList.remove('is-waking');
+  };
+
   if (planner.state === 'ready') reveal();
+  else if (planner.state === 'waking') showWaking();
   else if (planner.state === 'unavailable') showDown();
+  document.addEventListener('planner:waking', showWaking);
   document.addEventListener('planner:ready', reveal);
   document.addEventListener('planner:unavailable', showDown);
   // Came back late: switch over unless the visitor has started on the form.
@@ -198,6 +242,7 @@ import { PLANNER_ORIGIN } from '../lib/site';
   document.querySelector('[data-retry]')!.addEventListener('click', () => {
     document.body.classList.remove('is-down', 'ready');
     down.hidden = true;
+    resetLoading();
     planner.state = 'loading';
     w.__plannerWait();
     frame.src = frame.src;
@@ -318,7 +363,8 @@ import { PLANNER_ORIGIN } from '../lib/site';
   :global(body.ready) .loading, :global(body.is-down) .loading { opacity: 0; pointer-events: none; }
   .loading :global(.loading-mark) { animation: breathe 2.2s var(--ease) infinite alternate; }
   @keyframes breathe { from { transform: scale(0.94); opacity: 0.7; } to { transform: scale(1); opacity: 1; } }
-  .loading-text { color: var(--muted); }
+  .loading-text { color: var(--muted); max-width: 30ch; text-wrap: balance; }
+  :global(body.is-waking) .loading-text { color: var(--text); }
   .loading-q { font-family: var(--serif); font-size: clamp(1.4rem, 4vw, 2rem); font-weight: 600; max-width: 28ch; text-wrap: balance; }
 
   /* ---------- Planner unavailable ---------- */
