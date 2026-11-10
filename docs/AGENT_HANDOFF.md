@@ -37,12 +37,24 @@ Verified with a live run in headless Chrome: the planner showed the starter as t
 
 ## 4. Fallback: clipboard hint
 
-If the planner hasn't said `SYN` within 25 s, or doesn't ACK the message within 5 s:
+If the planner said `SYN` but doesn't ACK the message within 5 s:
 
 - `/plan` tries `navigator.clipboard.writeText(q)`. If that works it shows a small dismissible hint: "Your trip is copied, paste it with Ctrl+V / ⌘V".
 - Browsers usually block clipboard writes without a fresh user gesture. In that case the hint offers a **Copy my question** button instead, and pressing it shows the same message.
 
 Covered by `e2e/smoke.spec.ts` → "falls back to a copy hint when the planner does not confirm".
+
+## 5. Planner unavailable: enquiry form
+
+`SYN` doubles as the readiness signal. The planner iframe stays hidden behind the loading screen until it arrives, so a visitor never sees a blank error page. A 502 or an offline planner never sends it; the parent page can't read a cross-origin frame's HTTP status, so the missing `SYN` is the signal.
+
+- No `SYN` within **10 s** → `window.__planner.state = 'unavailable'`, event `planner:unavailable`, and `/plan` shows "The planner is taking a break." with a short form (name, email or Telegram, the trip, prefilled with the hero question). It posts `{kind: 'enquiry', …}` to `POST /api/requests` with an `Idempotency-Key` (kept across retries) and shows the returned `FT-…` reference. Links lead to the tours and the FAQ; **Try the planner again** reloads the frame.
+- If `SYN` arrives late (`planner:back`), the page switches to the planner, unless the visitor has started typing in the form; then it offers **Open the planner** instead. A pending question is still delivered.
+- Analytics: `planner_unavailable {reason, has_question}`, `planner_recovered`, and `planner_handoff {state: 'failed'}`. The enquiry itself is counted server-side as `booking_request_created {kind: 'enquiry', channel: 'plan_fallback'}`.
+
+If Agentplace ever drops `SYN`, the planner would look unavailable even while it works. The form still captures the lead, and `LIVE=1 npm run test:e2e -g "live planner"` checks the real handshake.
+
+Covered by `e2e/fallback.spec.ts` and the outage test in `e2e/analytics.spec.ts`.
 
 ## Theme
 

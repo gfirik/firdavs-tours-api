@@ -17,7 +17,7 @@
 | Route | What it is |
 |---|---|
 | `/` | Landing page. The hero *is* the conversation starter: type a question or tap a starter and the planner opens with it already asked. Featured journeys, how it works, destinations, FAQ |
-| `/plan` | The trip planner, full-screen and seamless |
+| `/plan` | The trip planner, full-screen and seamless. If the planner doesn't answer within 10 s, a short enquiry form takes its place |
 | `/about` | Case study: at a glance, eval chart (48% → 76% → 44% → 100% on 25 conversations), architecture, lessons, known limits, optional demo video |
 | `/credits` | Photo credits (Wikimedia Commons) |
 | `/api/*` | Quote, departures and booking-request functions the planner uses as tools, documented in [docs/API.md](docs/API.md) |
@@ -46,14 +46,14 @@ npm run preview
 ## Tests
 
 ```bash
-npm test                          # 27 unit tests: pricing, validation, idempotency, rate limit, auth, Telegram alert, server analytics
+npm test                          # 31 unit tests: pricing, validation, idempotency, rate limit, auth, Telegram alert, server analytics
 npm run test:e2e                  # Playwright smoke tests (desktop + 360px), against a local build
 PW_CHANNEL=chrome npm run test:e2e                 # use the installed Chrome instead of Playwright's browser
 BASE_URL=https://<deployment> npm run test:e2e     # run against a deployment
 LIVE=1 npm run test:e2e -g "live planner"          # one round trip through the real planner
 ```
 
-The e2e suite covers the agency CTAs and their UTM tags on every page, the /plan demo chip placement, the sticky mobile bar, analytics staying silent on localhost and preview hosts (and, on a simulated live host, that the typed question is never sent), the landing page, real prices on every tour card, JSON-LD, hero submit, chip and card handoff (against a protocol stub, so runs cost nothing), the clipboard fallback, /plan full-screen geometry, /about, 404, robots and sitemap, horizontal overflow at 360px, and a check that no page shows implementation words.
+The e2e suite covers the planner-outage fallback (form, validation, retries without duplicates, recovery), the agency CTAs and their UTM tags on every page, the /plan demo chip placement, the sticky mobile bar, analytics staying silent on localhost and preview hosts (and, on a simulated live host, that the typed question is never sent), the landing page, real prices on every tour card, JSON-LD, hero submit, chip and card handoff (against a protocol stub, so runs cost nothing), the clipboard fallback, /plan full-screen geometry, /about, 404, robots and sitemap, horizontal overflow at 360px, and a check that no page shows implementation words.
 
 ## fhsystems CTAs
 
@@ -92,11 +92,13 @@ PostHog, the same project as fhsystems.dev (EU). The key in `lib/posthog-key.js`
 | `section_viewed` | `section` (hero, tours, how, why, destinations, faq, agency, closing) | landing |
 | `planner_opened` | `source` (typed, chip, tour_card, destination, header, footer, cta, direct), `has_question`, `question_length` | /plan |
 | `planner_handoff` | `state` (delivered, failed) | /plan |
-| `planner_copy_clicked` | | /plan fallback hint |
+| `planner_unavailable` | `reason`, `has_question` | /plan, planner didn't answer within 10 s |
+| `planner_recovered` | | /plan, planner answered after the outage form was shown |
+| `planner_copy_clicked` | | /plan clipboard hint |
 | `agency_cta_click` | `placement` | every fhsystems CTA |
 | `outbound_clicked` | `host`, `place` | any external link |
 | `quote_served` | `tour`, `pax`, `hotel_class`, `ok` | `GET /api/quote` |
-| `booking_request_created` | `tour_id`, `travellers`, `hotel_class`, `language` | `POST /api/requests` |
+| `booking_request_created` | `kind` (booking, enquiry), `channel` (planner, plan_fallback), `tour_id`, `travellers`, `hotel_class`, `language` | `POST /api/requests` |
 
 The planner source is kept in `sessionStorage` between the click and /plan (`src/scripts/plan-source.ts`), so the `/plan?q=` URLs stay unchanged.
 
