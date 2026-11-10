@@ -18,7 +18,7 @@
 |---|---|
 | `/` | Landing page. The hero *is* the conversation starter: type a question or tap a starter and the planner opens with it already asked. Featured journeys, how it works, destinations, FAQ |
 | `/plan` | The trip planner, full-screen and seamless. The planner sleeps when idle: pages pre-warm it after the first interaction, /plan says "Waking up your planner" after 10 s, and a short enquiry form takes its place only after 60 s |
-| `/about` | Case study: at a glance, eval chart (48% → 76% → 44% → 100% on 25 conversations), architecture, lessons, known limits, optional demo video |
+| `/about` | Case study for business owners, in plain language: the problem, what the planner does for a tour company, results (four test rounds on 25 customer scenarios: 48% → 76% → 44% → 100%), lessons, known limits, optional demo video. No stack or vendor names: the e2e copy test enforces this on every page |
 | `/credits` | Photo credits (Wikimedia Commons) |
 | `/api/*` | Quote, departures and booking-request functions the planner uses as tools, documented in [docs/API.md](docs/API.md) |
 
@@ -62,7 +62,7 @@ Every link to the agency carries `utm_source=tours` and its placement as `utm_me
 | Where | Link | `utm_medium` / `placement` |
 |---|---|---|
 | Footer line on every page (incl. 404): "Build mine" | `https://fhsystems.dev/?utm_source=tours&utm_medium=footer` | `footer` |
-| Landing section "Want a planner like this for your business?" | `…&utm_medium=section` | `section` |
+| Landing section "Want a planner like this for your business?" (plus "See the case study" → /about) | `…&utm_medium=section` | `section` |
 | /about CTA block and "Demo project by fhsystems" label | `…&utm_medium=about` | `about`, `about_label` |
 | Footer "Built by fhsystems" badge | `https://fhsystems.dev` (unchanged) | `footer_badge` |
 | /plan "Demo by fhsystems" chip | `/about` | `plan_chip` |
