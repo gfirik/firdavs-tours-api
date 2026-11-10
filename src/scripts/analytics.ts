@@ -6,7 +6,7 @@ import { analytics as config } from '../lib/analytics-config';
  * looks new). The typed question is never sent: only whether there was one and its length.
  *
  * Events: $pageview, section_viewed, planner_opened, planner_handoff, planner_unavailable,
- * planner_recovered, planner_copy_clicked,
+ * planner_recovered, planner_cold_start, planner_copy_clicked,
  * agency_cta_click, outbound_clicked. Server events (quote_served, booking_request_created)
  * come from lib/analytics.js.
  */
@@ -56,6 +56,18 @@ function trackPlanner() {
     has_question: q.length > 0,
     question_length: q.length,
   });
+  // Ready only after the host woke the sleeping agent (over 10 s): how long it took.
+  let cold = false;
+  const reportCold = () => {
+    const p = (window as any).__planner;
+    if (cold || p?.state !== 'ready' || p.msToReady == null || p.msToReady <= 10_000) return;
+    cold = true;
+    posthog.capture('planner_cold_start', { seconds_to_ready: Math.round(p.msToReady / 100) / 10, reloads: p.reloads ?? 0 });
+  };
+  reportCold();
+  document.addEventListener('planner:ready', reportCold);
+  document.addEventListener('planner:back', reportCold);
+
   // No answer from the planner within the wait: the page switched to the enquiry form.
   let down = false;
   const reportDown = () => {

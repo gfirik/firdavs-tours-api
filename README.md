@@ -17,7 +17,7 @@
 | Route | What it is |
 |---|---|
 | `/` | Landing page. The hero *is* the conversation starter: type a question or tap a starter and the planner opens with it already asked. Featured journeys, how it works, destinations, FAQ |
-| `/plan` | The trip planner, full-screen and seamless. If the planner doesn't answer within 10 s, a short enquiry form takes its place |
+| `/plan` | The trip planner, full-screen and seamless. The planner sleeps when idle: pages pre-warm it after the first interaction, /plan says "Waking up your planner" after 10 s, and a short enquiry form takes its place only after 60 s |
 | `/about` | Case study: at a glance, eval chart (48% → 76% → 44% → 100% on 25 conversations), architecture, lessons, known limits, optional demo video |
 | `/credits` | Photo credits (Wikimedia Commons) |
 | `/api/*` | Quote, departures and booking-request functions the planner uses as tools, documented in [docs/API.md](docs/API.md) |
@@ -53,7 +53,7 @@ BASE_URL=https://<deployment> npm run test:e2e     # run against a deployment
 LIVE=1 npm run test:e2e -g "live planner"          # one round trip through the real planner
 ```
 
-The e2e suite covers the planner-outage fallback (form, validation, retries without duplicates, recovery), the agency CTAs and their UTM tags on every page, the /plan demo chip placement, the sticky mobile bar, analytics staying silent on localhost and preview hosts (and, on a simulated live host, that the typed question is never sent), the landing page, real prices on every tour card, JSON-LD, hero submit, chip and card handoff (against a protocol stub, so runs cost nothing), the clipboard fallback, /plan full-screen geometry, /about, 404, robots and sitemap, horizontal overflow at 360px, and a check that no page shows implementation words.
+The e2e suite covers planner cold starts (waking message, frame reloads, pre-warm once per session and never on page load), the planner-outage fallback (form, validation, retries without duplicates, recovery), the agency CTAs and their UTM tags on every page, the /plan demo chip placement, the sticky mobile bar, analytics staying silent on localhost and preview hosts (and, on a simulated live host, that the typed question is never sent), the landing page, real prices on every tour card, JSON-LD, hero submit, chip and card handoff (against a protocol stub, so runs cost nothing), the clipboard fallback, /plan full-screen geometry, /about, 404, robots and sitemap, horizontal overflow at 360px, and a check that no page shows implementation words.
 
 ## fhsystems CTAs
 
@@ -92,7 +92,8 @@ PostHog, the same project as fhsystems.dev (EU). The key in `lib/posthog-key.js`
 | `section_viewed` | `section` (hero, tours, how, why, destinations, faq, agency, closing) | landing |
 | `planner_opened` | `source` (typed, chip, tour_card, destination, header, footer, cta, direct), `has_question`, `question_length` | /plan |
 | `planner_handoff` | `state` (delivered, failed) | /plan |
-| `planner_unavailable` | `reason`, `has_question` | /plan, planner didn't answer within 10 s |
+| `planner_cold_start` | `seconds_to_ready`, `reloads` | /plan, the sleeping planner took over 10 s to wake |
+| `planner_unavailable` | `reason`, `has_question` | /plan, planner didn't answer within 60 s |
 | `planner_recovered` | | /plan, planner answered after the outage form was shown |
 | `planner_copy_clicked` | | /plan clipboard hint |
 | `agency_cta_click` | `placement` | every fhsystems CTA |

@@ -16,7 +16,7 @@ export const STARTERS = [
   'Do I need a visa?',
 ];
 
-/** Where the planner lives. Only ever referenced from /plan. */
+/** Where the planner lives. Embedded on /plan; other pages only ping it to wake it (src/scripts/prewarm.ts). */
 export const PLANNER_ORIGIN = 'https://ig63smceaks7.run.agentplace.io';
 
 /** The agency behind the demo. Every CTA carries utm_source=tours and its placement as utm_medium. */

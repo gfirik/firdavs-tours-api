@@ -44,13 +44,19 @@ If the planner said `SYN` but doesn't ACK the message within 5 s:
 
 Covered by `e2e/smoke.spec.ts` → "falls back to a copy hint when the planner does not confirm".
 
-## 5. Planner unavailable: enquiry form
+## 5. Cold starts and outages
 
-`SYN` doubles as the readiness signal. The planner iframe stays hidden behind the loading screen until it arrives, so a visitor never sees a blank error page. A 502 or an offline planner never sends it; the parent page can't read a cross-origin frame's HTTP status, so the missing `SYN` is the signal.
+`SYN` doubles as the readiness signal. The planner iframe stays hidden behind the loading screen until it arrives, so a visitor never sees an error page. The parent page can't read a cross-origin frame's HTTP status, so a missing `SYN` is the signal.
 
-- No `SYN` within **10 s** → `window.__planner.state = 'unavailable'`, event `planner:unavailable`, and `/plan` shows "The planner is taking a break." with a short form (name, email or Telegram, the trip, prefilled with the hero question). It posts `{kind: 'enquiry', …}` to `POST /api/requests` with an `Idempotency-Key` (kept across retries) and shows the returned `FT-…` reference. Links lead to the tours and the FAQ; **Try the planner again** reloads the frame.
+**Why the planner looks down:** Agentplace puts the agent to sleep when it's idle. The next request wakes it, which takes ~30–45 s. Meanwhile the URL answers with an error page ("waking up"), which never sends `SYN` and never reloads itself.
+
+- **Pre-warm** (`src/scripts/prewarm.ts`): every page that links to /plan sends one `no-cors` GET to the planner after the visitor's first interaction (pointer move, scroll, touch or key) and an idle frame, once per session (`sessionStorage`), skipped with Save-Data. It waits for an interaction because a sleeping planner answers with an error that the browser logs, and page-load audits such as Lighthouse must never see that. There is no keep-alive job.
+- **Reloading a silent frame:** each time the frame finishes loading without `SYN`, /plan reloads it after 8 s, then 16 s, then every 20 s at most. A healthy boot sends `SYN` 1–3 s after load (measured on the live planner), so a working planner is never reloaded.
+- No `SYN` within **10 s** → the loading screen says "Waking up your planner, this can take up to a minute…" (also announced to screen readers).
+- `SYN` arriving later carries on as normal: the planner is revealed, and the question is delivered. If that took over 10 s, PostHog gets `planner_cold_start {seconds_to_ready, reloads}`.
+- No `SYN` within **60 s** → `window.__planner.state = 'unavailable'`, event `planner:unavailable`, and `/plan` shows "The planner is taking a break." with a short form (name, email or Telegram, the trip, prefilled with the hero question). It posts `{kind: 'enquiry', …}` to `POST /api/requests` with an `Idempotency-Key` (kept across retries) and shows the returned `FT-…` reference. Links lead to the tours and the FAQ; **Try the planner again** reloads the frame.
 - If `SYN` arrives late (`planner:back`), the page switches to the planner, unless the visitor has started typing in the form; then it offers **Open the planner** instead. A pending question is still delivered.
-- Analytics: `planner_unavailable {reason, has_question}`, `planner_recovered`, and `planner_handoff {state: 'failed'}`. The enquiry itself is counted server-side as `booking_request_created {kind: 'enquiry', channel: 'plan_fallback'}`.
+- Analytics: `planner_cold_start {seconds_to_ready, reloads}`, `planner_unavailable {reason, has_question}`, `planner_recovered`, and `planner_handoff {state: 'failed'}`. The enquiry itself is counted server-side as `booking_request_created {kind: 'enquiry', channel: 'plan_fallback'}`.
 
 If Agentplace ever drops `SYN`, the planner would look unavailable even while it works. The form still captures the lead, and `LIVE=1 npm run test:e2e -g "live planner"` checks the real handshake.
 
