@@ -127,6 +127,7 @@ test.describe('pages', () => {
     await expect(page.locator('.lessons li')).toHaveCount(3);
     await expect(page.locator('.arch, svg[aria-labelledby^="arch"]')).toHaveCount(0); // no architecture diagram
     await expect(page.locator('#limits-title')).toBeVisible();
+    await expect(page.locator('[data-limit-history]')).toHaveText(/stays on screen during a visit, but nothing is kept after the traveller leaves/);
     const cta = new URL((await page.locator('[data-agency="about"]').getAttribute('href'))!);
     expect([cta.host, cta.searchParams.get('utm_source'), cta.searchParams.get('utm_medium')]).toEqual(['fhsystems.dev', 'tours', 'about']);
     await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', /demo .*by fhsystems/i);
