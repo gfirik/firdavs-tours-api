@@ -113,13 +113,17 @@ test.describe('pages', () => {
     expect(await page.evaluate(() => [document.documentElement.scrollHeight <= innerHeight, document.documentElement.scrollWidth <= innerWidth])).toEqual([true, true]);
   });
 
-  test('/about shows the four test runs', async ({ page }) => {
+  test('/about shows only the final test result', async ({ page }) => {
     await page.goto('/about');
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-    for (const v of ['48%', '76%', '44%', '100%']) await expect(page.locator('.eval-chart')).toContainText(v);
+    await expect(page.locator('[data-results]')).toHaveText('Tested on 25 customer scenarios before launch. All 25 passed, with no invented prices or tours. Every price comes from the tour company’s own price list, not from the AI.');
+    await expect(page.locator('[data-languages]')).toHaveText('Tested in English, Uzbek and Russian, including a full booking request from start to finish.');
+    await expect(page.locator('.stats li')).toHaveCount(3);
+    await expect(page.locator('.eval-chart, figure.chart')).toHaveCount(0); // no round-by-round chart
+    const text = await page.locator('main').innerText();
+    for (const v of ['48%', '76%', '44%', 'Test round', 'design change', 'dropped']) expect(text).not.toContain(v);
     await expect(page.locator('.demo-label').first()).toHaveText(/Demo project by\s+fhsystems/);
     await expect(page.locator('.glance dt')).toHaveText(['The problem', 'What it does for a tour company', 'Results']);
-    await expect(page.locator('.eval-chart .run')).toHaveText(['Test round 1', 'Test round 2', 'Test round 3', 'Test round 4']);
     await expect(page.locator('.lessons li')).toHaveCount(3);
     await expect(page.locator('.arch, svg[aria-labelledby^="arch"]')).toHaveCount(0); // no architecture diagram
     await expect(page.locator('#limits-title')).toBeVisible();

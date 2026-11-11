@@ -9,7 +9,12 @@ import { stubPlanner } from './helpers';
 async function liveHost(browser: Browser, baseURL: string | undefined) {
   // PostHog drops events from bots (headless user agent, navigator.webdriver), so this page presents as normal Chrome.
   const context = await browser.newContext({ userAgent: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36', viewport: { width: 1366, height: 860 } });
-  await context.addInitScript(() => Object.defineProperty(Navigator.prototype, 'webdriver', { get: () => false }));
+  await context.addInitScript(() => {
+    Object.defineProperty(Navigator.prototype, 'webdriver', { get: () => false });
+    // Newer headless Chromium also lists a "HeadlessChrome" brand, which PostHog checks too.
+    const uad = (navigator as any).userAgentData;
+    if (uad) Object.defineProperty(Navigator.prototype, 'userAgentData', { get: () => ({ brands: uad.brands.filter((b: any) => !/headless/i.test(b.brand)), mobile: uad.mobile, platform: uad.platform, getHighEntropyValues: uad.getHighEntropyValues.bind(uad) }) });
+  });
   const page = await context.newPage();
   const events: { event: string; properties: Record<string, any> }[] = [];
   const raw: string[] = [];

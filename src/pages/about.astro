@@ -9,30 +9,8 @@ import TileField from '../components/TileField.astro';
 import { tours } from '../lib/catalogue';
 import { AGENCY } from '../lib/site';
 
-// Written for business owners: what the planner does for a tour company and how it was proven,
-// never how it is built. Figures from the 25-scenario test results (../project-docs/evaluation).
-const ROUNDS = [
-  { round: 'Test round 1', label: 'First version', pass: 12 },
-  { round: 'Test round 2', label: 'Improved', pass: 19 },
-  { round: 'Test round 3', label: 'Redesign', pass: 11, regress: true },
-  { round: 'Test round 4', label: 'Launch', pass: 25 },
-];
-const TOTAL = 25;
-const pct = (n: number) => Math.round((n / TOTAL) * 100);
-
-// Column chart geometry (viewBox units). One scale for bars, gridlines and labels.
-const C = { left: 44, right: 350, top: 28, base: 198 };
-const H = C.base - C.top;
-const colW = 50;
-const step = (C.right - C.left) / ROUNDS.length;
-const y = (p: number) => C.base - (p / 100) * H;
-const bar = (x: number, top: number, w: number, r = 4) =>
-  `M${x},${C.base}V${top + r}Q${x},${top} ${x + r},${top}H${x + w - r}Q${x + w},${top} ${x + w},${top + r}V${C.base}Z`;
-const cols = ROUNDS.map((r, i) => {
-  const cx = C.left + step * (i + 0.5);
-  const p = pct(r.pass);
-  return { ...r, p, cx, x: cx - colW / 2, top: y(p) };
-});
+// Written for business owners: what the planner does for a tour company and the final test result,
+// never how it is built. Every figure is from the 25-scenario launch results (../project-docs/evaluation).
 
 // Optional demo video: rendered only when public/media/demo.mp4 exists at build time.
 const media = (f: string) => fs.existsSync(path.join(process.cwd(), 'public', 'media', f));
@@ -41,9 +19,9 @@ const poster = media('demo-poster.jpg') ? '/media/demo-poster.jpg' : '/og.jpg';
 ---
 <Base
   title="Case study · Firdavs Tours"
-  description="Case study: a travel consultant that recommends Uzbekistan tours, quotes exact prices from the price list and turns chats into booking requests in English, Uzbek and Russian. Tested on 25 customer scenarios before launch."
+  description="Case study: a travel consultant that recommends Uzbekistan tours, quotes exact prices from the price list and turns chats into booking requests in English, Uzbek and Russian. Tested on 25 customer scenarios before launch: all 25 passed."
   ogTitle="Firdavs Tours: a demo AI travel consultant by fhsystems"
-  ogDescription="A demo project by fhsystems: a travel consultant that quotes exact prices from a real price list and turns chats into booking requests. Tested on 25 customer scenarios, 100% at launch."
+  ogDescription="A demo project by fhsystems: a travel consultant that quotes exact prices from a real price list and turns chats into booking requests. Tested on 25 customer scenarios before launch: all 25 passed."
   path="/about"
 >
   <Header />
@@ -60,7 +38,7 @@ const poster = media('demo-poster.jpg') ? '/media/demo-poster.jpg' : '/og.jpg';
           <dl>
             <div><dt>The problem</dt><dd>A traveller asks for a price and waits hours, sometimes days, for a manual quote. By then many have booked elsewhere, and the team spends its day answering the same price questions.</dd></div>
             <div><dt>What it does for a tour company</dt><dd>Recommends the right one or two tours for the traveller’s dates, group and interests. Quotes the exact price from your own price list, shows real departure dates, answers practical questions, and turns the chat into a booking request with a reference number. In English, Uzbek and Russian.</dd></div>
-            <div><dt>Results</dt><dd>Tested on <span class="num">25</span> customer scenarios before launch. <span class="num">100%</span> handled correctly at launch. It never invented a price or a tour.</dd></div>
+            <div><dt>Results</dt><dd data-results>Tested on 25 customer scenarios before launch. All 25 passed, with no invented prices or tours. Every price comes from the tour company’s own price list, not from the AI.</dd></div>
           </dl>
         </section>
       </div>
@@ -75,53 +53,29 @@ const poster = media('demo-poster.jpg') ? '/media/demo-poster.jpg' : '/og.jpg';
       </section>
     )}
 
-    <section class="wrap narrow block" aria-labelledby="runs-title">
-      <h2 id="runs-title">Tested before a single customer saw it</h2>
-      <p class="sub">The same 25 customer scenarios in every round. A scenario passes only if the answer is correct, uses the real price list, stays short, replies in the traveller’s language and moves toward a booking.</p>
-      <figure class="chart">
-        <svg class="eval-chart" viewBox="0 0 360 250" role="img" aria-labelledby="eval-svg-title eval-svg-desc">
-          <title id="eval-svg-title">Customer scenarios handled correctly, by test round</title>
-          <desc id="eval-svg-desc">{cols.map((c) => `${c.round}, ${c.label}: ${c.pass} of ${TOTAL}, ${c.p}%`).join('. ')}.</desc>
-          {[0, 50, 100].map((g) => (
-            <g class="grid">
-              <line x1={C.left - 6} x2={C.right} y1={y(g)} y2={y(g)} />
-              <text x={C.left - 10} y={y(g) + 4} text-anchor="end">{g}%</text>
-            </g>
-          ))}
-          {cols.map((c) => (
-            <g class:list={['col', { regress: c.regress }]}>
-              <path d={bar(c.x, c.top, colW)} />
-              <text class="val" x={c.cx} y={c.top - 8} text-anchor="middle">{c.p}%</text>
-              <text class="run" x={c.cx} y={C.base + 20} text-anchor="middle">{c.round}</text>
-              <text class="lbl" x={c.cx} y={C.base + 36} text-anchor="middle">{c.label}</text>
-            </g>
-          ))}
-          <line class="axis" x1={C.left - 6} x2={C.right} y1={C.base} y2={C.base} />
-        </svg>
-        <div class="sr-only">
-        <table>
-          <caption>Customer scenarios handled correctly, by test round</caption>
-          <thead><tr><th scope="col">Round</th><th scope="col">Handled correctly</th><th scope="col">Share</th></tr></thead>
-          <tbody>{cols.map((c) => <tr><th scope="row">{c.round}, {c.label}</th><td>{c.pass} of {TOTAL}</td><td>{c.p}%</td></tr>)}</tbody>
-        </table>
-        </div>
-        <figcaption>In round 3 a design change broke how tours were shown. The tests caught it before launch, not a customer.</figcaption>
-      </figure>
+    <section class="wrap narrow block" aria-labelledby="tested-title">
+      <h2 id="tested-title">Tested before launch</h2>
+      <p class="sub">A scenario passes only if the answer is correct, uses the real price list, stays short, replies in the traveller’s language and moves toward a booking.</p>
+      <ul class="stats">
+        <li><span class="stat">25 of 25</span> customer scenarios passed</li>
+        <li><span class="stat">0</span> invented prices or tours</li>
+        <li><span class="stat">3</span> languages tested</li>
+      </ul>
       <h3 class="covers-title">What the 25 scenarios cover</h3>
       <ul class="tested">
-        <li>Exact quotes for couples, solo travellers, families and groups of 12 to 20</li>
+        <li>Exact quotes for couples, solo travellers, families and a group of 12, and a starting rate for larger groups</li>
         <li>Requests for trips that aren’t offered, pressure for discounts, and attempts to talk it out of its rules</li>
         <li>Practical questions: best season, trains, visas, dress code, money</li>
-        <li>Whole conversations in Uzbek and Russian, ending in a booking request</li>
+        <li data-languages>Tested in English, Uzbek and Russian, including a full booking request from start to finish.</li>
       </ul>
     </section>
 
     <section class="wrap narrow block" aria-labelledby="lessons-title">
       <h2 id="lessons-title">Lessons</h2>
       <ol class="lessons">
-        <li><h3>Prices come from your price list, never from guesswork</h3><p>Every quote is taken straight from the prices you set. That is what makes it safe to show a price the moment someone asks.</p></li>
-        <li><h3>Every chat should end in a request</h3><p>The traveller confirms a short summary and gets a reference number. Your team receives a request it can act on, not just a conversation.</p></li>
-        <li><h3>Test every change before customers see it</h3><p>A design change once dropped the share of scenarios handled well from 76% to 44%. Re-running the same 25 scenarios caught it before launch.</p></li>
+        <li><h3>Prices come from the price list, never from the AI’s memory</h3><p>Every quote is worked out from the prices the tour company sets, so it is safe to show a price the moment someone asks.</p></li>
+        <li><h3>Every chat ends in a request</h3><p>The traveller confirms a short summary and gets a reference number. The team receives a request it can act on, not just a conversation.</p></li>
+        <li><h3>Every change is tested before it goes live</h3><p>Changes are checked against the same customer scenarios before travellers see them. The planner went live with all 25 passing.</p></li>
       </ol>
     </section>
 
@@ -174,17 +128,10 @@ const poster = media('demo-poster.jpg') ? '/media/demo-poster.jpg' : '/og.jpg';
 
   .demo-video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; margin-top: 24px; border-radius: var(--radius-lg); border: 1px solid var(--line); background: var(--surface); }
 
-  .chart { margin: 32px 0 0; padding: clamp(16px, 3vw, 28px); background: var(--surface); border: 1px solid var(--line-soft); border-radius: var(--radius-lg); }
-  .chart svg { display: block; width: 100%; max-width: 560px; height: auto; margin-inline: auto; overflow: visible; }
-  .eval-chart .grid line { stroke: var(--line); stroke-width: 1; stroke-dasharray: 2 4; }
-  .eval-chart .axis { stroke: var(--muted); stroke-width: 1; }
-  .eval-chart text { fill: var(--muted); font: 500 11px var(--sans); }
-  .eval-chart .col path { fill: var(--turq-ink); }
-  .eval-chart .col.regress path { fill: var(--gold); }
-  .eval-chart .val { fill: var(--text); font: 600 15px var(--sans); font-variant-numeric: tabular-nums; }
-  .eval-chart .run { fill: var(--text); font: 600 11px var(--sans); }
-  .eval-chart .lbl { fill: var(--muted); font: 400 11px var(--sans); }
-  .chart figcaption { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line-soft); color: var(--muted); font-size: 0.95rem; }
+  .stats { list-style: none; margin: 28px 0 0; padding: 0; display: grid; gap: 12px; }
+  @media (min-width: 640px) { .stats { grid-template-columns: repeat(3, 1fr); } }
+  .stats li { display: grid; gap: 4px; align-content: start; padding: 18px 20px; border-radius: var(--radius-lg); background: var(--surface); border: 1px solid var(--line-soft); color: var(--muted); }
+  .stat { font: 600 clamp(1.9rem, 4vw, 2.4rem)/1 var(--serif); color: var(--text); font-variant-numeric: lining-nums tabular-nums; }
   .covers-title { font-size: 1.5rem; margin-top: 40px; }
 
   .lessons { list-style: none; margin: 24px 0 0; padding: 0; border-top: 1px solid var(--line); counter-reset: lesson; }
