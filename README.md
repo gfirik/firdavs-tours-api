@@ -18,7 +18,7 @@
 |---|---|
 | `/` | Landing page. The hero *is* the conversation starter: type a question or tap a starter and the planner opens with it already asked. Featured journeys, how it works, destinations, FAQ |
 | `/plan` | The trip planner, full-screen and seamless. The planner sleeps when idle: pages pre-warm it after the first interaction, /plan says "Waking up your planner" after 10 s, and a short enquiry form takes its place only after 60 s |
-| `/about` | Case study for business owners, in plain language: the problem, what the planner does for a tour company, results (four test rounds on 25 customer scenarios: 48% → 76% → 44% → 100%), lessons, known limits, optional demo video. No stack or vendor names: the e2e copy test enforces this on every page |
+| `/about` | Case study for business owners, in plain language: the problem, what the planner does for a tour company, the final test result (all 25 customer scenarios passed before launch, with no invented prices or tours), lessons, known limits, optional demo video. No stack or vendor names: the e2e copy test enforces this on every page |
 | `/credits` | Photo credits (Wikimedia Commons) |
 | `/api/*` | Quote, departures and booking-request functions the planner uses as tools, documented in [docs/API.md](docs/API.md) |
 

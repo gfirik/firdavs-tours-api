@@ -23,12 +23,14 @@ const saveData = (navigator as any).connection?.saveData === true;
 if (location.pathname !== '/plan' && !saveData && !warmed() && document.querySelector('a[href^="/plan"]')) {
   const events = ['pointermove', 'pointerdown', 'keydown', 'scroll', 'touchstart'] as const;
   let fired = false;
-  const go = () => {
+  const go = (e: Event) => {
+    // Browsers fire a zero-distance pointermove on their own after layout (hover update): not the visitor.
+    if (e.type === 'pointermove' && !(e as PointerEvent).movementX && !(e as PointerEvent).movementY) return;
     if (fired) return;
     fired = true;
     events.forEach((e) => window.removeEventListener(e, go));
     if (typeof window.requestIdleCallback === 'function') window.requestIdleCallback(ping, { timeout: 1500 });
     else window.setTimeout(ping, 300);
   };
-  events.forEach((e) => window.addEventListener(e, go, { passive: true, once: true }));
+  events.forEach((e) => window.addEventListener(e, go, { passive: true }));
 }
