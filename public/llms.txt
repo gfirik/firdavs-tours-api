@@ -1,0 +1,16 @@
+# Firdavs Tours (demo by fhsystems)
+
+> Firdavs Tours is a demo AI travel consultant built by fhsystems on real 2026 Uzbekistan tour prices. It is a demonstration brand, not a real travel agency: it takes no real bookings and has no real customers.
+
+The demo recommends private and small-group tours across Uzbekistan, quotes exact prices from its 2026 price list, answers practical travel questions, and turns a chat into a booking request with a reference number, in English, Uzbek and Russian. Requests made on this site are demo requests; no trip is booked, sold or paid for.
+
+## Pages
+
+- [Home](https://tours.fhsystems.dev/): the tours, their 2026 prices and common travel questions
+- [Planner](https://tours.fhsystems.dev/plan): the AI travel consultant itself (demo)
+- [Case study](https://tours.fhsystems.dev/about): what the consultant does for a tour company, how it was tested, and its known limits
+
+## Built by
+
+- [fhsystems: Firdavs Tours case study](https://fhsystems.dev/works/firdavs-tours)
+- [fhsystems](https://fhsystems.dev)

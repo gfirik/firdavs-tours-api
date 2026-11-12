@@ -9,6 +9,7 @@ import { SITE, STARTERS, AGENCY } from '../lib/site';
 import { tours, tourById, fromPrice, usd, nextDepartures, fmtDate, quote, tourStarter, planHref } from '../lib/catalogue';
 import { photo } from '../lib/photos';
 import { FAQ } from '../data/faq';
+import { graph, ref, DEMO_NAME, DEMO_DESCRIPTION } from '../lib/schema';
 
 // Featured routes and the photograph that carries each one.
 const FEATURED: [string, string][] = [
@@ -47,25 +48,25 @@ const archWebp = await getImage({ src: arch.src, width: 900, format: 'webp', qua
 const closing = photo('registan-evening');
 
 const jsonLd = [
-  {
-    '@context': 'https://schema.org',
-    '@type': 'TravelAgency',
-    name: SITE.name,
+  graph({
+    '@type': 'WebPage',
+    '@id': SITE.url + '/#webpage',
     url: SITE.url + '/',
-    logo: SITE.url + '/apple-touch-icon.png',
-    image: SITE.url + '/og.jpg',
-    description: SITE.description,
-    areaServed: { '@type': 'Country', name: 'Uzbekistan' },
-    availableLanguage: ['English', 'Uzbek', 'Russian'],
-    currenciesAccepted: 'USD',
-    priceRange: `${usd(Math.min(...tours.map(fromPrice)))}–${usd(Math.max(...tours.map((t) => fromPrice(t))))} per person`,
-  },
+    name: DEMO_NAME,
+    description: DEMO_DESCRIPTION,
+    inLanguage: 'en',
+    isPartOf: ref.site,
+    creator: ref.org,
+    publisher: ref.org,
+    primaryImageOfPage: { '@type': 'ImageObject', url: SITE.url + '/og.jpg', width: 1200, height: 630 },
+  }),
+  // Every answer is the visible FAQ text (the e2e test compares them).
   {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
     mainEntity: FAQ.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
   },
-];
+]
 ---
 <Base
   title="Firdavs Tours · Plan your trip to Uzbekistan"

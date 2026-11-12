@@ -20,6 +20,7 @@
 | `/plan` | The trip planner, full-screen and seamless. The planner sleeps when idle: pages pre-warm it after the first interaction, /plan says "Waking up your planner" after 10 s, and a short enquiry form takes its place only after 60 s |
 | `/about` | Case study for business owners, in plain language: the problem, what the planner does for a tour company, the final test result (all 25 customer scenarios passed before launch, with no invented prices or tours), lessons, known limits, optional demo video. No stack or vendor names: the e2e copy test enforces this on every page |
 | `/credits` | Photo credits (Wikimedia Commons) |
+| `/llms.txt` | Plain-text summary for AI crawlers: a demo by fhsystems on real 2026 prices that takes no real bookings, with links to /, /plan, /about and the fhsystems case study |
 | `/api/*` | Quote, departures and booking-request functions the planner uses as tools, documented in [docs/API.md](docs/API.md) |
 
 The question reaches the planner over the planner's own parent-frame message channel, with a clipboard fallback. See [docs/AGENT_HANDOFF.md](docs/AGENT_HANDOFF.md).
@@ -53,7 +54,7 @@ BASE_URL=https://<deployment> npm run test:e2e     # run against a deployment
 LIVE=1 npm run test:e2e -g "live planner"          # one round trip through the real planner
 ```
 
-The e2e suite covers planner cold starts (waking message, frame reloads, pre-warm once per session and never on page load), the planner-outage fallback (form, validation, retries without duplicates, recovery), the agency CTAs and their UTM tags on every page, the /plan demo chip placement, the sticky mobile bar, analytics staying silent on localhost and preview hosts (and, on a simulated live host, that the typed question is never sent), the landing page, real prices on every tour card, JSON-LD, hero submit, chip and card handoff (against a protocol stub, so runs cost nothing), the clipboard fallback, /plan full-screen geometry, /about, 404, robots and sitemap, horizontal overflow at 360px, and a check that no page shows implementation words.
+The e2e suite covers planner cold starts (waking message, frame reloads, pre-warm once per session and never on page load), the planner-outage fallback (form, validation, retries without duplicates, recovery), the agency CTAs and their UTM tags on every page, the /plan demo chip placement, the sticky mobile bar, analytics staying silent on localhost and preview hosts (and, on a simulated live host, that the typed question is never sent), the landing page, real prices on every tour card, structured data that describes a demo by fhsystems and never a business (FAQ answers match the visible text), /llms.txt, hero submit, chip and card handoff (against a protocol stub, so runs cost nothing), the clipboard fallback, /plan full-screen geometry, /about, 404, robots and sitemap, horizontal overflow at 360px, and a check that no page shows implementation words.
 
 ## fhsystems CTAs
 
