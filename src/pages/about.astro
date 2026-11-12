@@ -7,10 +7,33 @@ import Footer from '../components/Footer.astro';
 import Icon from '../components/Icon.astro';
 import TileField from '../components/TileField.astro';
 import { tours } from '../lib/catalogue';
-import { AGENCY } from '../lib/site';
+import { AGENCY, SITE } from '../lib/site';
+import { graph, ref } from '../lib/schema';
 
 // Written for business owners: what the planner does for a tour company and the final test result,
 // never how it is built. Every figure is from the 25-scenario launch results (../project-docs/evaluation).
+
+// Case study as an Article by fhsystems. Bump DATE_MODIFIED whenever the visible copy changes.
+const DESCRIPTION = 'Case study: a travel consultant that recommends Uzbekistan tours, quotes exact prices from the price list and turns chats into booking requests in English, Uzbek and Russian. Tested on 25 customer scenarios before launch: all 25 passed.';
+const DATE_PUBLISHED = '2026-11-06';
+const DATE_MODIFIED = '2026-11-11';
+const jsonLd = [
+  graph({
+    '@type': 'Article',
+    '@id': SITE.url + '/about#article',
+    headline: 'A travel consultant that quotes, and closes the loop',
+    description: DESCRIPTION,
+    url: SITE.url + '/about',
+    mainEntityOfPage: SITE.url + '/about',
+    image: SITE.url + '/og.jpg',
+    inLanguage: 'en',
+    datePublished: DATE_PUBLISHED,
+    dateModified: DATE_MODIFIED,
+    author: ref.org,
+    publisher: ref.org,
+    isPartOf: ref.site,
+  }),
+];
 
 // Optional demo video: rendered only when public/media/demo.mp4 exists at build time.
 const media = (f: string) => fs.existsSync(path.join(process.cwd(), 'public', 'media', f));
@@ -19,7 +42,8 @@ const poster = media('demo-poster.jpg') ? '/media/demo-poster.jpg' : '/og.jpg';
 ---
 <Base
   title="Case study · Firdavs Tours"
-  description="Case study: a travel consultant that recommends Uzbekistan tours, quotes exact prices from the price list and turns chats into booking requests in English, Uzbek and Russian. Tested on 25 customer scenarios before launch: all 25 passed."
+  description={DESCRIPTION}
+  jsonLd={jsonLd}
   ogTitle="Firdavs Tours: a demo AI travel consultant by fhsystems"
   ogDescription="A demo project by fhsystems: a travel consultant that quotes exact prices from a real price list and turns chats into booking requests. Tested on 25 customer scenarios before launch: all 25 passed."
   path="/about"

@@ -26,13 +26,42 @@ test.describe('landing page', () => {
     await expect(page.locator('footer a[href="https://fhsystems.dev"]')).toBeVisible();
   });
 
-  test('structured data: TravelAgency and FAQPage', async ({ page }) => {
-    await page.goto('/');
-    const types = await page.locator('script[type="application/ld+json"]').evaluateAll((els) =>
-      els.map((e) => JSON.parse(e.textContent || '{}')['@type']),
-    );
-    expect(types).toEqual(expect.arrayContaining(['TravelAgency', 'FAQPage']));
+  test('structured data: a demo site by fhsystems, never a business', async ({ page, request }) => {
+    const ld = async (path: string) => {
+      await page.goto(path);
+      const html = await page.content();
+      for (const banned of ['TravelAgency', 'LocalBusiness', 'aggregateRating', 'Review', 'telephone', 'PostalAddress', 'priceRange'])
+        expect(html, `${path} must not claim ${banned}`).not.toContain(banned);
+      const blocks = await page.locator('script[type="application/ld+json"]').evaluateAll((els) => els.map((e) => JSON.parse(e.textContent || '{}')));
+      return blocks.flatMap((b: any) => b['@graph'] ?? [b]);
+    };
+    const home = await ld('/');
+    const byType = (nodes: any[], t: string) => nodes.find((n) => n['@type'] === t);
+    expect(home.map((n) => n['@type'])).toEqual(['Organization', 'WebSite', 'WebPage', 'FAQPage']);
+    expect(byType(home, 'Organization')).toMatchObject({ name: 'fhsystems', url: 'https://fhsystems.dev' });
+    for (const t of ['WebSite', 'WebPage']) {
+      expect(byType(home, t).name).toBe('Firdavs Tours (demo by fhsystems)');
+      expect(byType(home, t).creator['@id']).toBe(byType(home, 'Organization')['@id']);
+      expect(byType(home, t).publisher['@id']).toBe(byType(home, 'Organization')['@id']);
+    }
+    // Every FAQ answer in the data is the visible answer, word for word.
+    const visible = await page.locator('#faq details').evaluateAll((ds) => ds.map((d) => [d.querySelector('summary')!.textContent!.trim(), d.querySelector('p')!.textContent!.trim()]));
+    expect(byType(home, 'FAQPage').mainEntity.map((q: any) => [q.name, q.acceptedAnswer.text])).toEqual(visible);
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://tours.fhsystems.dev/');
+
+    const article = byType(await ld('/about'), 'Article');
+    expect(article.headline).toBe(await page.locator('h1').innerText());
+    expect(article.description).toBe(await page.locator('meta[name="description"]').getAttribute('content'));
+    expect(article.author['@id']).toBe('https://fhsystems.dev/#organization');
+    expect(article.publisher['@id']).toBe('https://fhsystems.dev/#organization');
+    expect(article.datePublished).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(article.dateModified >= article.datePublished).toBe(true);
+    for (const path of ['/plan', '/credits']) expect(await ld(path)).toEqual([]);
+
+    const llms = await request.get('/llms.txt');
+    expect(llms.status()).toBe(200);
+    const txt = await llms.text();
+    for (const s of ['demo', 'fhsystems', 'no real bookings', 'https://tours.fhsystems.dev/plan', 'https://tours.fhsystems.dev/about', 'https://fhsystems.dev/works/firdavs-tours']) expect(txt).toContain(s);
   });
 });
 
