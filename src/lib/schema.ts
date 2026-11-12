@@ -11,7 +11,13 @@ export const DEMO_DESCRIPTION =
 const ORG_ID = AGENCY.url + '/#organization';
 const SITE_ID = SITE.url + '/#website';
 
-export const fhsystems = { '@type': 'Organization', '@id': ORG_ID, name: AGENCY.name, url: AGENCY.url };
+export const fhsystems = {
+  '@type': 'Organization',
+  '@id': ORG_ID,
+  name: AGENCY.name,
+  url: AGENCY.url,
+  contactPoint: { '@type': 'ContactPoint', contactType: 'sales', email: AGENCY.email, url: AGENCY.url },
+};
 
 export const website = {
   '@type': 'WebSite',

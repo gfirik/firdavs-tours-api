@@ -38,7 +38,7 @@ test.describe('landing page', () => {
     const home = await ld('/');
     const byType = (nodes: any[], t: string) => nodes.find((n) => n['@type'] === t);
     expect(home.map((n) => n['@type'])).toEqual(['Organization', 'WebSite', 'WebPage', 'FAQPage']);
-    expect(byType(home, 'Organization')).toMatchObject({ name: 'fhsystems', url: 'https://fhsystems.dev' });
+    expect(byType(home, 'Organization')).toMatchObject({ name: 'fhsystems', url: 'https://fhsystems.dev', contactPoint: { '@type': 'ContactPoint', contactType: 'sales', email: 'firdavs@fhsystems.dev' } });
     for (const t of ['WebSite', 'WebPage']) {
       expect(byType(home, t).name).toBe('Firdavs Tours (demo by fhsystems)');
       expect(byType(home, t).creator['@id']).toBe(byType(home, 'Organization')['@id']);
@@ -49,7 +49,9 @@ test.describe('landing page', () => {
     expect(byType(home, 'FAQPage').mainEntity.map((q: any) => [q.name, q.acceptedAnswer.text])).toEqual(visible);
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://tours.fhsystems.dev/');
 
-    const article = byType(await ld('/about'), 'Article');
+    const about = await ld('/about');
+    expect(byType(about, 'Organization').contactPoint).toMatchObject({ contactType: 'sales', email: 'firdavs@fhsystems.dev' });
+    const article = byType(about, 'Article');
     expect(article.headline).toBe(await page.locator('h1').innerText());
     expect(article.description).toBe(await page.locator('meta[name="description"]').getAttribute('content'));
     expect(article.author['@id']).toBe('https://fhsystems.dev/#organization');
@@ -61,7 +63,7 @@ test.describe('landing page', () => {
     const llms = await request.get('/llms.txt');
     expect(llms.status()).toBe(200);
     const txt = await llms.text();
-    for (const s of ['demo', 'fhsystems', 'no real bookings', 'https://tours.fhsystems.dev/plan', 'https://tours.fhsystems.dev/about', 'https://fhsystems.dev/works/firdavs-tours']) expect(txt).toContain(s);
+    for (const s of ['demo', 'fhsystems', 'no real bookings', 'https://tours.fhsystems.dev/plan', 'https://tours.fhsystems.dev/about', 'https://fhsystems.dev/works/firdavs-tours', 'Want an AI travel consultant like this?', 'tour operators', 'firdavs@fhsystems.dev']) expect(txt).toContain(s);
   });
 });
 

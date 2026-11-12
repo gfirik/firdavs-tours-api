@@ -23,5 +23,6 @@ export const PLANNER_ORIGIN = 'https://ig63smceaks7.run.agentplace.io';
 export const AGENCY = {
   name: 'fhsystems',
   url: 'https://fhsystems.dev',
+  email: 'firdavs@fhsystems.dev',
   link: (medium: 'footer' | 'section' | 'about') => `https://fhsystems.dev/?utm_source=tours&utm_medium=${medium}`,
 };
