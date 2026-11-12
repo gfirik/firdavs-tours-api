@@ -10,6 +10,13 @@ The demo recommends private and small-group tours across Uzbekistan, quotes exac
 - [Planner](https://tours.fhsystems.dev/plan): the AI travel consultant itself (demo)
 - [Case study](https://tours.fhsystems.dev/about): what the consultant does for a tour company, how it was tested, and its known limits
 
+## Want an AI travel consultant like this?
+
+fhsystems, the team that built this demo, builds AI travel consultants like it for tour operators and travel agencies. One can be set up on a company's own tours and prices: it answers travellers in their language, quotes from that company's price list and turns chats into booking requests for its team.
+
+- Website: https://fhsystems.dev
+- Email: firdavs@fhsystems.dev
+
 ## Built by
 
 - [fhsystems: Firdavs Tours case study](https://fhsystems.dev/works/firdavs-tours)
